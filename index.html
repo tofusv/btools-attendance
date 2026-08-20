@@ -1,1 +1,1936 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ระบบเช็คชื่อเข้าเรียน - B Tools Training</title>
+  
+  <!-- Official Google Fonts: Sarabun (รองรับภาษาไทย 100% มีหัว อ่านง่าย สบายตา) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  
+  <style>
+    *, *::before, *::after, html, body, button, input, select, textarea, span, div, h1, h2, h3, p, a, label, b, strong {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #E65100;
+      --primary-light: #FFF3E0;
+      --primary-dark: #BF360C;
+      --success: #2E7D32;
+      --success-light: #E8F5E9;
+      --danger: #C62828;
+      --danger-light: #FFEBEE;
+      --text-main: #202124;
+      --text-muted: #5F6368;
+      --bg: #F8F9FA;
+      --card-bg: #FFFFFF;
+      --border-color: #E0E0E0;
+      --radius: 18px;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 6px 12px 60px 12px;
+      max-width: 520px;
+      margin: 0 auto;
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* HEADER CARD WITH LOGO & TOP-RIGHT HR BUTTON */
+    .header-card {
+      background: linear-gradient(135deg, #FF6F00 0%, #E65100 100%);
+      color: white;
+      padding: 16px 18px;
+      border-radius: var(--radius);
+      box-shadow: 0 6px 18px rgba(230, 81, 0, 0.22);
+      margin-bottom: 12px;
+    }
+
+    .header-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .brand-logo-box {
+      background: white;
+      padding: 5px 12px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .header-logo-img {
+      height: 24px;
+      width: auto;
+      display: block;
+    }
+
+    /* TOP RIGHT HR TOGGLE BUTTON (SHORT ENGLISH) */
+    .btn-hr-toggle {
+      background: rgba(255, 255, 255, 0.22);
+      color: white;
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      backdrop-filter: blur(4px);
+      transition: all 0.2s ease;
+    }
+
+    .btn-hr-toggle:active {
+      transform: scale(0.95);
+      background: white;
+      color: var(--primary);
+    }
+
+    .course-title {
+      font-size: 1.18rem;
+      font-weight: 700;
+      line-height: 1.38;
+      margin-bottom: 6px;
+    }
+
+    .course-meta {
+      font-size: 0.9rem;
+      opacity: 0.95;
+      line-height: 1.55;
+    }
+
+    /* PERSONALIZED USER CARD (STUDENT VIEW) */
+    .personal-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+      border: 2px solid var(--primary-light);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .personal-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .personal-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .personal-info {
+      flex: 1;
+    }
+
+    .personal-greeting {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .personal-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .personal-dept {
+      font-size: 0.88rem;
+      color: #616161;
+      margin-top: 2px;
+    }
+
+    /* Check-in Action Button */
+    .btn-personal-checkin {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 1.08rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(230, 81, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-personal-checkin:active {
+      transform: scale(0.98);
+      background: var(--primary-dark);
+    }
+
+    .checked-success-box {
+      background: #E8F5E9;
+      border: 1.5px solid #A5D6A7;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      color: var(--success);
+    }
+
+    .checked-success-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .checked-success-time {
+      font-size: 0.9rem;
+      color: #558B2F;
+      margin-bottom: 10px;
+    }
+
+    .btn-undo-checkin {
+      background: white;
+      color: var(--danger);
+      border: 1.5px solid #EF9A9A;
+      padding: 7px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .btn-undo-checkin:hover {
+      background: var(--danger-light);
+    }
+
+    .personal-card-footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed #E0E0E0;
+    }
+
+    .switch-user-btn {
+      background: none;
+      border: none;
+      font-size: 0.85rem;
+      color: #757575;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      text-decoration: underline;
+    }
+
+    .switch-user-btn:hover {
+      color: var(--primary);
+    }
+
+    /* Session Banner Card */
+    .session-card {
+      background: var(--card-bg);
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .session-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .session-date-badge {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .progress-wrapper {
+      margin-top: 6px;
+    }
+
+    .progress-bar-bg {
+      background: #EEEEEE;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #4CAF50, #2E7D32);
+      height: 100%;
+      width: 0%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    /* Notice */
+    .notice-box {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .notice-warning {
+      background: #FFF3E0;
+      border: 1.5px solid #FFE082;
+      color: #E65100;
+    }
+
+    /* Section Title */
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 16px 4px 10px 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .refresh-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+
+    /* Student List */
+    .student-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .student-card {
+      background: var(--card-bg);
+      border: 1.5px solid #EEEEEE;
+      border-radius: var(--radius);
+      padding: 13px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      transition: all 0.2s ease;
+    }
+
+    .student-card.clickable {
+      cursor: pointer;
+    }
+
+    .student-card.clickable:active {
+      transform: scale(0.98);
+      border-color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    .student-card.disabled {
+      cursor: default;
+      opacity: 0.88;
+    }
+
+    .student-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .student-no {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #F0F0F0;
+      color: #616161;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .student-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .student-nickname {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .student-name {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+    }
+
+    .student-dept {
+      font-size: 0.76rem;
+      color: #757575;
+      margin-top: 2px;
+    }
+
+    /* Short English 'Select' Button */
+    .btn-checkin {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      box-shadow: 0 3px 8px rgba(230, 81, 0, 0.25);
+      pointer-events: none;
+    }
+
+    .student-card.checked {
+      background-color: #F1F8E9;
+      border-color: #A5D6A7;
+      cursor: default;
+      opacity: 1 !important;
+    }
+
+    .student-card.checked .student-no {
+      background: #C8E6C9;
+      color: var(--success);
+    }
+
+    .checked-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      color: var(--success);
+    }
+
+    .checked-label {
+      font-size: 0.92rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .checked-time {
+      font-size: 0.8rem;
+      color: #558B2F;
+      font-weight: 600;
+      margin-top: 1px;
+    }
+
+    /* =========================================
+       HR / TRAINER DASHBOARD VIEW STYLES
+       ========================================= */
+    .hr-control-card {
+      background: white;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+    }
+
+    .hr-emergency-card {
+      background: #FFF3E0;
+      border: 2px dashed #FF9800;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .btn-hr-emergency-unlock {
+      width: 100%;
+      background: #E65100;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      box-shadow: 0 3px 10px rgba(230, 81, 0, 0.3);
+      transition: all 0.2s;
+    }
+
+    .btn-hr-emergency-unlock:active {
+      transform: scale(0.98);
+      background: #BF360C;
+    }
+
+    .hr-control-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .hr-session-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+      background: #FAFAFA;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .hr-session-select:focus {
+      border-color: var(--primary);
+      background: white;
+    }
+
+    .hr-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .hr-stat-box {
+      background: white;
+      padding: 14px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hr-stat-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .hr-stat-value {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .hr-stat-sub {
+      font-size: 0.76rem;
+      color: #757575;
+    }
+
+    .hr-action-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .btn-hr-line-copy {
+      flex: 1;
+      background: #06C755;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(6, 199, 85, 0.25);
+      transition: all 0.2s;
+    }
+
+    .btn-hr-line-copy:active {
+      transform: scale(0.97);
+    }
+
+    /* Filter Tabs for HR */
+    .hr-tabs-wrapper {
+      display: flex;
+      background: #EEEEEE;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      gap: 4px;
+    }
+
+    .hr-tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 8px 6px;
+      border-radius: 9px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: #616161;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .hr-tab-btn.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      font-weight: 700;
+    }
+
+    /* Mini Progress Bar for Cumulative View */
+    .mini-progress-bg {
+      background: #EEEEEE;
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+      width: 100%;
+    }
+
+    .mini-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: #4CAF50;
+      transition: width 0.3s;
+    }
+
+    /* =========================================
+       PIN CODE MODAL STYLES
+       ========================================= */
+    .pin-input-field {
+      width: 160px;
+      height: 48px;
+      font-size: 1.6rem;
+      letter-spacing: 12px;
+      text-align: center;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      margin: 12px auto;
+      display: block;
+      outline: none;
+      background: #F9F9F9;
+    }
+
+    .pin-input-field:focus {
+      border-color: var(--primary);
+      background: white;
+    }
+
+    .pin-error-msg {
+      color: var(--danger);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(3px);
+    }
+
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 4px solid #FFE0B2;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Modal Dialog */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 22px;
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px auto;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .modal-warning-text {
+      background: #FFF3E0;
+      color: #D84315;
+      font-size: 0.82rem;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-modal {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.98rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      background: #EEEEEE;
+      color: #616161;
+    }
+
+    .btn-confirm {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #2E7D32;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading State -->
+  <div id="loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <div style="font-weight: 500; color: #555;">กำลังโหลดข้อมูล...</div>
+  </div>
+
+  <!-- NO CLASS ACCESS VIEW -->
+  <div id="no-class-view" style="display: none;">
+    <div style="background: white; padding: 30px 20px; border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; margin-top: 30px;">
+      <div style="font-size: 3rem; margin-bottom: 12px;">📱</div>
+      <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 8px;">กรุณาสแกน QR Code ประจำคลาส</div>
+      <div style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.5;">
+        ระบบเปิดให้เข้าดูผ่านการสแกน <b>QR Code ประจำคลาสเรียน</b> ของคุณเท่านั้น เพื่อความปลอดภัยของข้อมูล
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CLASS VIEW -->
+  <div id="class-view" style="display: none;">
+    
+    <!-- Header Card with Top Right Short English HR/Instructor Button -->
+    <header class="header-card">
+      <div class="header-top-row">
+        <div class="brand-logo-box">
+          <img src="https://iili.io/CLrwrGa.png" alt="B Tools Training" class="header-logo-img">
+        </div>
+        <!-- TOP-RIGHT SHORT ENGLISH TOGGLE BUTTON -->
+        <button id="btn-toggle-role" class="btn-hr-toggle" onclick="handleRoleToggleClick()">
+          🔒 HR / Instructor
+        </button>
+      </div>
+      
+      <h1 class="course-title" id="course-name">Loading...</h1>
+      <div class="course-meta">
+        <div>🏢 <span id="company-name">-</span> (<span id="class-duration">-</span>)</div>
+        <div>⏰ <span id="schedule-text">-</span></div>
+      </div>
+    </header>
+
+    <!-- ==============================================
+         VIEW 1: STUDENT CHECK-IN SECTION (DEFAULT)
+         ============================================== -->
+    <div id="student-view-section">
+      <!-- PERSONALIZED USER CARD -->
+      <div id="personal-card-container"></div>
+
+      <!-- Session Info Card -->
+      <section class="session-card">
+        <div class="session-title-row">
+          <span>รอบการเรียนประจำวันนี้</span>
+          <span id="stat-text" style="color: var(--primary);">Present 0 คน</span>
+        </div>
+        <div class="session-date-badge" id="session-display-badge">
+          📅 กำลังตรวจสอบวันที่...
+        </div>
+        <div class="progress-wrapper">
+          <div class="progress-bar-bg">
+            <div id="progress-bar" class="progress-bar-fill"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Notice Container -->
+      <div id="notice-container"></div>
+
+      <!-- Student List Header -->
+      <div class="section-title">
+        <span id="list-header-title">รายชื่อผู้เข้าร่วมการอบรม 👇</span>
+        <button class="refresh-btn" onclick="refreshCurrentClass()">🔄 รีเฟรช</button>
+      </div>
+
+      <!-- Student Cards -->
+      <main id="student-list" class="student-list">
+        <!-- Populated via JS -->
+      </main>
+    </div>
+
+    <!-- ==============================================
+         VIEW 2: HR & TRAINER LIVE DASHBOARD SECTION
+         ============================================== -->
+    <div id="hr-view-section" style="display: none;">
+      
+      <!-- Trainer Emergency Unlock Box -->
+      <div id="hr-emergency-unlock-box" class="hr-emergency-card" style="display: none;">
+        <div style="font-weight: 700; color: #E65100; font-size: 0.95rem;">🚨 เปิดรับเช็คชื่อรอบชดเชยพิเศษวันนี้</div>
+        <div style="font-size: 0.82rem; color: #666; margin-top: 2px;">สำหรับกรณีเปิดเรียนชดเชยในวันพิเศษที่ไม่ได้อยู่ในตารางปกติ</div>
+        <button class="btn-hr-emergency-unlock" onclick="handleEmergencyUnlockClick()">
+          ➕ เปิดรับเช็คชื่อรอบวันนี้ (<span id="hr-emergency-today-date">-</span>) ทันที 🚀
+        </button>
+      </div>
+
+      <!-- Session Selector Dropdown -->
+      <div class="hr-control-card">
+        <label class="hr-control-label">📅 เลือกรอบวันที่ต้องการดูข้อมูล / ดูสถิติสะสม:</label>
+        <select id="hr-session-select" class="hr-session-select" onchange="onHrSessionSelectChange()">
+          <!-- Populated dynamically via JS -->
+        </select>
+      </div>
+
+      <!-- KPI Stats Grid (Short English) -->
+      <div class="hr-stats-grid">
+        <div class="hr-stat-box">
+          <div class="hr-stat-label" id="hr-stat-box1-label">Present</div>
+          <div class="hr-stat-value" id="hr-stat-box1-val" style="color: var(--success);">0/0</div>
+          <div class="hr-stat-sub" id="hr-stat-box1-sub">0% ของผู้เรียนทั้งหมด</div>
+        </div>
+        <div class="hr-stat-box">
+          <div class="hr-stat-label" id="hr-stat-box2-label">Absent</div>
+          <div class="hr-stat-value" id="hr-stat-box2-val" style="color: var(--danger);">0 คน</div>
+          <div class="hr-stat-sub" id="hr-stat-box2-sub">ยังไม่เช็คชื่อ</div>
+        </div>
+      </div>
+
+      <!-- Action Button: Copy Summary to LINE -->
+      <div class="hr-action-bar">
+        <button class="btn-hr-line-copy" onclick="copyLineSummary()">
+          💬 ก๊อปปี้รายงานสรุปยอดส่ง LINE
+        </button>
+      </div>
+
+      <!-- Filter Tabs (Short English) -->
+      <div id="hr-tabs-container" class="hr-tabs-wrapper">
+        <button id="hr-tab-all" class="hr-tab-btn active" onclick="filterHrList('all')">All (<span id="hr-cnt-all">0</span>)</button>
+        <button id="hr-tab-present" class="hr-tab-btn" onclick="filterHrList('present')">Present (<span id="hr-cnt-present">0</span>) 🟢</button>
+        <button id="hr-tab-absent" class="hr-tab-btn" onclick="filterHrList('absent')">Absent (<span id="hr-cnt-absent">0</span>) 🔴</button>
+      </div>
+
+      <!-- HR Student List -->
+      <div id="hr-student-list" class="student-list">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PIN ENTRY MODAL (HR / TRAINER ACCESS) -->
+  <div id="pin-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-avatar" style="background:#FFF3E0; color:#E65100;">🔑</div>
+      <div class="modal-title">สำหรับ HR / ผู้สอน</div>
+      <div class="modal-subtitle">กรุณากรอกรหัส PIN 4 หลักเพื่อเข้าสู่แดชบอร์ด</div>
+      
+      <input type="password" id="hr-pin-input" class="pin-input-field" maxlength="4" placeholder="••••" inputmode="numeric" onkeyup="handlePinKeyUp(event)">
+      <div id="pin-error" class="pin-error-msg">⚠️ รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</div>
+      
+      <div class="modal-actions">
+        <button class="btn-modal btn-cancel" onclick="closePinModal()">ยกเลิก</button>
+        <button class="btn-modal btn-confirm" onclick="verifyPinCode()">เข้าสู่ระบบ ✔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal (Student Check-in) -->
+  <div id="confirm-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div id="modal-avatar" class="modal-avatar">1</div>
+      <div id="modal-title" class="modal-title">คุณ Belle</div>
+      <div id="modal-subtitle" class="modal-subtitle">Apinya Wichchai</div>
+      <div class="modal-warning-text">
+        🔒 <b>ข้อกำหนด:</b> เครื่องนี้จะถูกผูกกับชื่อคุณตลอดการเรียน และไม่สามารถเช็คชื่อแทนผู้อื่นได้
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal btn-cancel" onclick="closeModal()">ยกเลิก</button>
+        <button class="btn-modal btn-confirm" onclick="confirmCheckIn()">ยืนยันว่านี่คือฉัน ✔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+    <span>✔</span> <span id="toast-msg">ข้อความ</span>
+  </div>
+
+  <script>
+    /**
+     * =========================================================================
+     * CONFIGURATION: GOOGLE APPS SCRIPT WEB APP API URL
+     * =========================================================================
+     * วาง URL ของ Google Apps Script Web App ที่นี่ สำหรับการรันบน GitHub Pages
+     */
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR_DwzCJHTNOWe2e-PBebQn87BD7jyu6w9pjlkCFNDCCt3l8LtkG9S5wK888rfC301Ig/exec"; // <-- แก้เป็น Web App URL จริงของคุณ
+
+    const DEFAULT_HR_PIN = "0000";
+    let currentClassName = "";
+    let initialUserParam = "";
+    let appData = null;
+    let selectedStudent = null;
+    let currentViewMode = "student"; // 'student' or 'hr'
+    let currentHrFilter = "all";
+    let selectedSessionDate = "today"; // 'today', 'cumulative', or '10-Apr-24'
+
+    /* Universal API Caller: Handles GitHub Pages (Fetch) & Native Apps Script Fallback */
+    async function apiRequest(action, params = {}) {
+      const devToken = getDeviceToken();
+      const devFp = getDeviceFingerprint();
+      const payload = { action: action, deviceToken: devToken, deviceFingerprint: devFp, ...params };
+
+      // 1. If running externally (GitHub Pages / Localhost)
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        try {
+          const res = await fetch(GAS_API_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          return json;
+        } catch (err) {
+          throw new Error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: " + err.message);
+        }
+      }
+
+      // 2. If running inside Google Apps Script iframe
+      return new Promise((resolve, reject) => {
+        if (action === "getClassData") {
+          google.script.run
+            .withSuccessHandler(data => resolve({ success: true, data: data }))
+            .withFailureHandler(err => reject(err))
+            .getClassData(params.className, devToken, devFp);
+        } else if (action === "recordCheckIn") {
+          google.script.run
+            .withSuccessHandler(res => resolve(res))
+            .withFailureHandler(err => reject(err))
+            .recordCheckIn(params.className, params.studentNo, params.sessionDateStr, devToken, devFp);
+        } else if (action === "cancelCheckIn") {
+          google.script.run
+            .withSuccessHandler(res => resolve(res))
+            .withFailureHandler(err => reject(err))
+            .cancelCheckIn(params.className, params.studentNo, params.sessionDateStr, devToken, devFp);
+        } else if (action === "resetDeviceIdentity") {
+          google.script.run
+            .withSuccessHandler(res => resolve(res))
+            .withFailureHandler(err => reject(err))
+            .resetDeviceIdentity(params.className, devToken, devFp);
+        } else if (action === "openEmergencySession") {
+          google.script.run
+            .withSuccessHandler(res => resolve(res))
+            .withFailureHandler(err => reject(err))
+            .openEmergencySession(params.className, params.sessionDateStr, devToken, devFp);
+        }
+      });
+    }
+
+    /* Clean time string: removes redundant ✔ and brackets to prevent duplicate icons */
+    function cleanTimeString(rawTime) {
+      if (!rawTime) return "";
+      const cleaned = rawTime.toString().replace(/✔/g, "").replace(/[()]/g, "").trim();
+      return cleaned ? `(${cleaned})` : "";
+    }
+
+    function getDeviceFingerprint() {
+      try {
+        const nav = window.navigator || {};
+        const scr = window.screen || {};
+        
+        const components = [
+          nav.userAgent || '',
+          nav.language || '',
+          scr.width || '',
+          scr.height || '',
+          scr.colorDepth || '',
+          nav.hardwareConcurrency || '',
+          nav.maxTouchPoints || '',
+          Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+        ];
+        
+        const rawStr = components.join('###');
+        
+        let hash = 5381;
+        for (let i = 0; i < rawStr.length; i++) {
+          hash = ((hash << 5) + hash) + rawStr.charCodeAt(i);
+          hash = hash & hash;
+        }
+        return 'fp_' + Math.abs(hash).toString(36);
+      } catch (e) {
+        return 'fp_fallback_' + Date.now();
+      }
+    }
+
+    function getDeviceToken() {
+      let token = null;
+      try { token = localStorage.getItem('bt_device_token'); } catch (e) {}
+      
+      if (!token) {
+        const match = document.cookie.match(/(?:^|; )bt_device_token=([^;]*)/);
+        if (match) token = decodeURIComponent(match[1]);
+      }
+      
+      if (!token) {
+        token = 'dev_' + Math.random().toString(36).substring(2, 12) + '_' + Date.now();
+        saveDeviceToken(token);
+      }
+      return token;
+    }
+
+    function saveDeviceToken(token) {
+      try { localStorage.setItem('bt_device_token', token); } catch (e) {}
+      document.cookie = `bt_device_token=${encodeURIComponent(token)}; max-age=31536000; path=/; SameSite=Lax`;
+    }
+
+    function getPermanentStudentKey(className) {
+      return `bt_permanent_student_${className}`;
+    }
+
+    function getDeviceCheckedDateKey(className) {
+      return `bt_device_checked_date_${className}`;
+    }
+
+    function getLocalStoredStudent(className) {
+      const key = getPermanentStudentKey(className);
+      let val = null;
+      try { val = localStorage.getItem(key); } catch (e) {}
+      if (!val) {
+        const match = document.cookie.match(new RegExp('(?:^|; )' + key + '=([^;]*)'));
+        if (match) val = decodeURIComponent(match[1]);
+      }
+      return val;
+    }
+
+    function setLocalStoredStudent(className, studentNo) {
+      const key = getPermanentStudentKey(className);
+      try { localStorage.setItem(key, String(studentNo)); } catch (e) {}
+      document.cookie = `${key}=${encodeURIComponent(String(studentNo))}; max-age=31536000; path=/; SameSite=Lax`;
+    }
+
+    function clearLocalStoredStudent(className) {
+      const key = getPermanentStudentKey(className);
+      try { localStorage.removeItem(key); } catch (e) {}
+      document.cookie = `${key}=; max-age=0; path=/; SameSite=Lax`;
+    }
+
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      currentClassName = urlParams.get('class') || "";
+      initialUserParam = urlParams.get('u') || "";
+
+      if (currentClassName) {
+        loadClassData(currentClassName);
+      } else {
+        showLoading(false);
+        document.getElementById('no-class-view').style.display = 'block';
+      }
+    };
+
+    function showLoading(show) {
+      document.getElementById('loading').style.display = show ? 'flex' : 'none';
+    }
+
+    async function loadClassData(className) {
+      showLoading(true);
+      document.getElementById('no-class-view').style.display = 'none';
+      document.getElementById('class-view').style.display = 'block';
+
+      try {
+        const res = await apiRequest("getClassData", { className: className });
+        if (res.success && res.data) {
+          renderClassData(res.data);
+        } else {
+          throw new Error(res.message || "ไม่สามารถโหลดข้อมูลคลาสได้");
+        }
+      } catch (err) {
+        handleError(err);
+      }
+    }
+
+    function refreshCurrentClass() {
+      if (currentClassName) {
+        loadClassData(currentClassName);
+      }
+    }
+
+    function isHrAuthenticated() {
+      return sessionStorage.getItem('bt_hr_authenticated') === 'true';
+    }
+
+    function handleRoleToggleClick() {
+      if (currentViewMode === "hr") {
+        currentViewMode = "student";
+        document.getElementById('student-view-section').style.display = 'block';
+        document.getElementById('hr-view-section').style.display = 'none';
+        document.getElementById('btn-toggle-role').innerHTML = "🔒 HR / Instructor";
+      } else {
+        if (isHrAuthenticated()) {
+          switchToHrView();
+        } else {
+          openPinModal();
+        }
+      }
+    }
+
+    function openPinModal() {
+      const pinInput = document.getElementById('hr-pin-input');
+      pinInput.value = '';
+      document.getElementById('pin-error').style.display = 'none';
+      document.getElementById('pin-modal').style.display = 'flex';
+      setTimeout(() => pinInput.focus(), 150);
+    }
+
+    function closePinModal() {
+      document.getElementById('pin-modal').style.display = 'none';
+    }
+
+    function handlePinKeyUp(e) {
+      if (e.key === 'Enter') {
+        verifyPinCode();
+      }
+    }
+
+    function verifyPinCode() {
+      const enteredPin = document.getElementById('hr-pin-input').value.trim();
+      if (enteredPin === DEFAULT_HR_PIN) {
+        sessionStorage.setItem('bt_hr_authenticated', 'true');
+        closePinModal();
+        showToast("ยินดีต้อนรับสู่แดชบอร์ด HR / ผู้สอน 👔");
+        switchToHrView();
+      } else {
+        document.getElementById('pin-error').style.display = 'block';
+        document.getElementById('hr-pin-input').value = '';
+        document.getElementById('hr-pin-input').focus();
+      }
+    }
+
+    function switchToHrView() {
+      currentViewMode = "hr";
+      document.getElementById('student-view-section').style.display = 'none';
+      document.getElementById('hr-view-section').style.display = 'block';
+      document.getElementById('btn-toggle-role').innerHTML = "👈 Back";
+      initHrSessionSelector();
+      renderHrDashboard();
+    }
+
+    async function handleEmergencyUnlockClick() {
+      if (!currentClassName || !appData) return;
+      if (confirm(`ยืนยันการเปิดรับเช็คชื่อรอบชดเชยพิเศษสำหรับวันนี้ (${appData.todayDateStr}) หรือไม่?`)) {
+        showLoading(true);
+        try {
+          const res = await apiRequest("openEmergencySession", {
+            className: currentClassName,
+            sessionDateStr: appData.todayDateStr
+          });
+          showLoading(false);
+          if (res.success) {
+            showToast("เปิดรอบเรียนพิเศษสำเร็จแล้ว! 🚀");
+            renderClassData(res.updatedData);
+          } else {
+            alert("เกิดข้อผิดพลาด: " + res.message);
+          }
+        } catch (err) {
+          handleError(err);
+        }
+      }
+    }
+
+    function renderClassData(data) {
+      appData = data;
+      showLoading(false);
+
+      if (data.courseInfo) {
+        currentClassName = data.courseInfo.className;
+        document.getElementById('course-name').innerText = data.courseInfo.course;
+        document.getElementById('company-name').innerText = data.courseInfo.company || 'ลูกค้า';
+        document.getElementById('class-duration').innerText = data.courseInfo.classDuration || '';
+        document.getElementById('schedule-text').innerText = data.courseInfo.schedule || '-';
+      }
+
+      // Multi-Tier Identity Resolution: Cloud Bound ID -> URL Param -> LocalStorage -> Cookie
+      let effectiveStudentNo = data.boundStudentNo;
+      if (!effectiveStudentNo && initialUserParam) {
+        effectiveStudentNo = initialUserParam;
+      }
+      if (!effectiveStudentNo) {
+        effectiveStudentNo = getLocalStoredStudent(currentClassName);
+      }
+      
+      if (effectiveStudentNo) {
+        setLocalStoredStudent(currentClassName, effectiveStudentNo);
+      }
+
+      const savedStudent = effectiveStudentNo ? data.students.find(s => String(s.no) === String(effectiveStudentNo)) : null;
+
+      // Session Info Badge
+      const badge = document.getElementById('session-display-badge');
+      const noticeBox = document.getElementById('notice-container');
+      noticeBox.innerHTML = '';
+
+      if (data.isClassToday) {
+        const makeupLabel = data.isAutoMakeupSession ? " (รอบชดเชยอัตโนมัติ)" : "";
+        badge.innerHTML = `📅 วันนี้: <b>${data.currentSessionDate}</b> (เปิดรับเช็คชื่อ${makeupLabel})`;
+        badge.style.background = '#E8F5E9';
+        badge.style.color = '#2E7D32';
+      } else {
+        const nextText = data.nextSession ? `รอบถัดไป: <b>${data.nextSession.display}</b>` : '';
+        badge.innerHTML = `⛔ วันนี้ไม่มีคลาสเรียน (${data.todayDateStr})`;
+        badge.style.background = '#FFEBEE';
+        badge.style.color = '#C62828';
+
+        noticeBox.innerHTML = `
+          <div class="notice-box notice-warning">
+            <span>⚠️</span>
+            <div>
+              <b>ไม่อยู่ในช่วงเวลาเรียน</b><br>
+              ระบบเปิดให้เช็คชื่อเฉพาะวันเรียนจริงเท่านั้น (${nextText})
+            </div>
+          </div>
+        `;
+      }
+
+      // Render Student View
+      renderPersonalCard(savedStudent, data.isClassToday);
+      renderStudentList(data.students, data.isClassToday, savedStudent);
+
+      // If on HR view, refresh HR dashboard too
+      if (currentViewMode === "hr") {
+        initHrSessionSelector();
+        renderHrDashboard();
+      }
+    }
+
+    function renderPersonalCard(savedStudent, isClassToday) {
+      const container = document.getElementById('personal-card-container');
+      
+      if (!savedStudent) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let actionHtml = '';
+      let switchBtnHtml = '';
+
+      if (!isClassToday) {
+        actionHtml = `
+          <div class="checked-success-box" style="background:#FFF3E0; border-color:#FFE082; color:#E65100;">
+            <div class="checked-success-title">⏳ วันนี้ไม่มีรอบเรียน</div>
+            <div style="font-size:0.85rem; color:#757575;">ระบบจะเปิดรับเช็คชื่อในวันเรียนถัดไป</div>
+          </div>
+        `;
+        switchBtnHtml = `
+          <div class="personal-card-footer">
+            <button class="switch-user-btn" onclick="resetSavedStudent()">
+              🔄 ไม่ใช่คุณ ${savedStudent.nickname || savedStudent.name}? (เปลี่ยนอุปกรณ์ / สลับชื่อ)
+            </button>
+          </div>
+        `;
+      } else if (savedStudent.isChecked) {
+        const formattedTime = (savedStudent.checkTime || "").replace(/✔/g, "").replace(/[()]/g, "").trim();
+        actionHtml = `
+          <div class="checked-success-box">
+            <div class="checked-success-title">✔ เช็คชื่อเข้าเรียนวันนี้แล้ว</div>
+            <div class="checked-success-time">บันทึกเวลา: ${formattedTime || savedStudent.checkTime} น.</div>
+            <button class="btn-undo-checkin" onclick="confirmUndoCheckIn(savedStudentObject)">
+              ↩️ ยกเลิกการเช็คชื่อวันนี้ (กดผิดคน / ยกเลิก)
+            </button>
+          </div>
+        `;
+        window.savedStudentObject = savedStudent;
+        switchBtnHtml = '';
+      } else {
+        actionHtml = `
+          <button class="btn-personal-checkin" onclick="openModal(savedStudentObject)">
+            👉 แตะเพื่อเช็คชื่อเข้าเรียนวันนี้ ✔
+          </button>
+        `;
+        window.savedStudentObject = savedStudent;
+        switchBtnHtml = `
+          <div class="personal-card-footer">
+            <button class="switch-user-btn" onclick="resetSavedStudent()">
+              🔄 ไม่ใช่คุณ ${savedStudent.nickname || savedStudent.name}? (เปลี่ยนอุปกรณ์ / สลับชื่อ)
+            </button>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="personal-card">
+          <div class="personal-header">
+            <div class="personal-avatar">${savedStudent.no}</div>
+            <div class="personal-info">
+              <div class="personal-greeting">👋 สวัสดี</div>
+              <div class="personal-name">คุณ ${savedStudent.nickname || savedStudent.name}</div>
+              <div class="personal-dept">${savedStudent.name} ${savedStudent.dept && savedStudent.dept !== '-' ? '(' + savedStudent.dept + ')' : ''}</div>
+            </div>
+          </div>
+          ${actionHtml}
+          ${switchBtnHtml}
+        </div>
+      `;
+    }
+
+    function renderStudentList(students, isClassToday, savedStudent) {
+      const listEl = document.getElementById('student-list');
+      listEl.innerHTML = '';
+      let checkedCount = 0;
+
+      const headerTitle = document.getElementById('list-header-title');
+      
+      // Clean header title
+      if (savedStudent) {
+        headerTitle.innerText = "สถานะการเข้าเรียนของเพื่อนร่วมคลาส 👥";
+      } else {
+        headerTitle.innerText = "แตะชื่อของคุณเพื่อเช็คชื่อ (ครั้งแรก) 👇";
+      }
+
+      students.forEach(st => {
+        if (st.isChecked) checkedCount++;
+
+        // Only clickable if device has NO saved student and is on valid class day
+        const canClick = !savedStudent && isClassToday && !st.isChecked;
+
+        const card = document.createElement('div');
+        let cardClass = 'student-card';
+        if (st.isChecked) {
+          cardClass += ' checked';
+        } else if (canClick) {
+          cardClass += ' clickable';
+        } else {
+          cardClass += ' disabled';
+        }
+        card.className = cardClass;
+        
+        if (canClick) {
+          card.onclick = () => openModal(st);
+        }
+
+        const deptHtml = st.dept && st.dept !== '-' ? `<div class="student-dept">🏢 ${st.dept}</div>` : '';
+        
+        let rightActionHtml = '';
+        if (st.isChecked) {
+          const timeClean = cleanTimeString(st.checkTime);
+          rightActionHtml = `
+            <div class="checked-badge">
+              <span class="checked-label">✔ Present</span>
+              <span class="checked-time">${timeClean}</span>
+            </div>
+          `;
+        } else if (!savedStudent && isClassToday) {
+          rightActionHtml = `<button class="btn-checkin">Select</button>`;
+        } else {
+          rightActionHtml = `<span style="font-size:0.85rem; color:#9E9E9E; font-weight:600;">Absent</span>`;
+        }
+
+        card.innerHTML = `
+          <div class="student-left">
+            <div class="student-no">${st.no}</div>
+            <div class="student-info">
+              <div class="student-nickname">${st.nickname || st.name}</div>
+              <div class="student-name">${st.name}</div>
+              ${deptHtml}
+            </div>
+          </div>
+          <div class="student-status">${rightActionHtml}</div>
+        `;
+
+        listEl.appendChild(card);
+      });
+
+      const total = students.length;
+      document.getElementById('stat-text').innerText = `Present ${checkedCount}/${total} คน`;
+      const percent = total > 0 ? (checkedCount / total) * 100 : 0;
+      document.getElementById('progress-bar').style.width = percent + '%';
+    }
+
+    /* =========================================
+       HR DASHBOARD & SESSION SELECTOR ENGINE
+       ========================================= */
+    function initHrSessionSelector() {
+      if (!appData || !appData.sessions) return;
+
+      const sel = document.getElementById('hr-session-select');
+      const prevVal = sel.value || selectedSessionDate;
+      sel.innerHTML = '';
+
+      // Option 1: Today / Active Session
+      const todayDate = appData.currentSessionDate;
+      const optToday = document.createElement('option');
+      optToday.value = 'today';
+      optToday.innerText = `📅 รอบวันนี้ / ล่าสุด (${todayDate || appData.todayDateStr})`;
+      sel.appendChild(optToday);
+
+      // Option 2: Cumulative All Sessions
+      const optAll = document.createElement('option');
+      optAll.value = 'cumulative';
+      optAll.innerText = `📊 สรุปสถิติสะสมตลอดหลักสูตร (All Sessions)`;
+      sel.appendChild(optAll);
+
+      // Option Group: Past/All Sessions
+      const group = document.createElement('optgroup');
+      group.label = "── ประวัติย้อนหลังแยกรายครั้ง ──";
+
+      appData.sessions.forEach((s, idx) => {
+        const opt = document.createElement('option');
+        opt.value = s.dateStr;
+        opt.innerText = `ครั้งที่ ${s.no || (idx + 1)} (${s.dateStr})`;
+        group.appendChild(opt);
+      });
+      sel.appendChild(group);
+
+      sel.value = prevVal || 'today';
+      selectedSessionDate = sel.value;
+    }
+
+    function onHrSessionSelectChange() {
+      selectedSessionDate = document.getElementById('hr-session-select').value;
+      renderHrDashboard();
+    }
+
+    function renderHrDashboard() {
+      if (!appData || !appData.students) return;
+
+      const students = appData.students;
+      const totalStudents = students.length;
+      const totalSessions = appData.totalSessionsCount || appData.sessions.length || 15;
+
+      // Emergency Unlock Box Visibility in HR View
+      const emergencyBox = document.getElementById('hr-emergency-unlock-box');
+      if (!appData.isClassToday) {
+        emergencyBox.style.display = 'block';
+        document.getElementById('hr-emergency-today-date').innerText = appData.todayDateStr;
+      } else {
+        emergencyBox.style.display = 'none';
+      }
+
+      const tabsContainer = document.getElementById('hr-tabs-container');
+
+      if (selectedSessionDate === 'cumulative') {
+        tabsContainer.style.display = 'none';
+
+        let grandTotalPresent = 0;
+        students.forEach(s => grandTotalPresent += (s.totalPresent || 0));
+        const maxPossibleAttendances = totalStudents * totalSessions;
+        const overallPct = maxPossibleAttendances > 0 ? Math.round((grandTotalPresent / maxPossibleAttendances) * 100) : 0;
+
+        document.getElementById('hr-stat-box1-label').innerText = "อัตราเข้าเรียนเฉลี่ยรวม";
+        document.getElementById('hr-stat-box1-val').innerText = `${overallPct}%`;
+        document.getElementById('hr-stat-box1-val').style.color = "var(--primary)";
+        document.getElementById('hr-stat-box1-sub').innerText = `จากทั้งหมด ${totalSessions} ครั้ง`;
+
+        document.getElementById('hr-stat-box2-label').innerText = "ผู้เรียนทั้งหมด";
+        document.getElementById('hr-stat-box2-val').innerText = `${totalStudents} คน`;
+        document.getElementById('hr-stat-box2-val').style.color = "var(--text-main)";
+        document.getElementById('hr-stat-box2-sub').innerText = `ในคลาสนี้`;
+
+        renderHrCumulativeStudentList(students, totalSessions);
+      } else {
+        tabsContainer.style.display = 'flex';
+
+        const targetDate = (selectedSessionDate === 'today') ? appData.currentSessionDate : selectedSessionDate;
+
+        const presentList = [];
+        const absentList = [];
+
+        students.forEach(st => {
+          let isPresent = false;
+          let checkTime = "";
+
+          if (selectedSessionDate === 'today') {
+            isPresent = st.isChecked;
+            checkTime = st.checkTime;
+          } else {
+            const histVal = (st.attendanceHistory && st.attendanceHistory[targetDate]) || "";
+            if (histVal.trim() !== "") {
+              isPresent = true;
+              checkTime = histVal;
+            }
+          }
+
+          if (isPresent) {
+            presentList.push({ ...st, sessionCheckTime: checkTime });
+          } else {
+            absentList.push(st);
+          }
+        });
+
+        const presentCount = presentList.length;
+        const absentCount = absentList.length;
+        const pct = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
+
+        document.getElementById('hr-stat-box1-label').innerText = "Present";
+        document.getElementById('hr-stat-box1-val').innerText = `${presentCount}/${totalStudents}`;
+        document.getElementById('hr-stat-box1-val').style.color = "var(--success)";
+        document.getElementById('hr-stat-box1-sub').innerText = `${pct}% ของผู้เรียนทั้งหมด`;
+
+        document.getElementById('hr-stat-box2-label').innerText = "Absent";
+        document.getElementById('hr-stat-box2-val').innerText = `${absentCount} คน`;
+        document.getElementById('hr-stat-box2-val').style.color = "var(--danger)";
+        document.getElementById('hr-stat-box2-sub').innerText = `ยังไม่เช็คชื่อ`;
+
+        document.getElementById('hr-cnt-all').innerText = totalStudents;
+        document.getElementById('hr-cnt-present').innerText = presentCount;
+        document.getElementById('hr-cnt-absent').innerText = absentCount;
+
+        renderHrSingleSessionStudentList(presentList, absentList, targetDate);
+      }
+    }
+
+    function filterHrList(filter) {
+      currentHrFilter = filter;
+      document.getElementById('hr-tab-all').classList.toggle('active', filter === 'all');
+      document.getElementById('hr-tab-present').classList.toggle('active', filter === 'present');
+      document.getElementById('hr-tab-absent').classList.toggle('active', filter === 'absent');
+      renderHrDashboard();
+    }
+
+    function renderHrSingleSessionStudentList(presentList, absentList, targetDate) {
+      const listEl = document.getElementById('hr-student-list');
+      listEl.innerHTML = '';
+
+      let listToShow = [];
+      if (currentHrFilter === 'all') {
+        appData.students.forEach(st => {
+          const isP = presentList.find(p => p.no === st.no);
+          listToShow.push({ ...st, isPresentSession: !!isP, sessionTime: isP ? isP.sessionCheckTime : "" });
+        });
+      } else if (currentHrFilter === 'present') {
+        listToShow = presentList.map(st => ({ ...st, isPresentSession: true, sessionTime: st.sessionCheckTime }));
+      } else if (currentHrFilter === 'absent') {
+        listToShow = absentList.map(st => ({ ...st, isPresentSession: false, sessionTime: "" }));
+      }
+
+      if (listToShow.length === 0) {
+        listEl.innerHTML = `<div style="text-align:center; padding:20px; color:#9E9E9E; font-size:0.9rem;">ไม่มีรายชื่อในหมวดนี้</div>`;
+        return;
+      }
+
+      listToShow.forEach(st => {
+        const card = document.createElement('div');
+        card.className = 'student-card disabled' + (st.isPresentSession ? ' checked' : '');
+
+        const deptHtml = st.dept && st.dept !== '-' ? `<div class="student-dept">🏢 ${st.dept}</div>` : '';
+        
+        let rightStatus = '';
+        if (st.isPresentSession) {
+          const timeClean = cleanTimeString(st.sessionTime);
+          rightStatus = `
+            <div class="checked-badge">
+              <span class="checked-label">✔ Present</span>
+              <span class="checked-time">${timeClean}</span>
+            </div>
+          `;
+        } else {
+          rightStatus = `
+            <div style="text-align:right;">
+              <span style="color:var(--danger); font-size:0.88rem; font-weight:700;">Absent</span>
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="student-left">
+            <div class="student-no">${st.no}</div>
+            <div class="student-info">
+              <div class="student-nickname">${st.nickname || st.name}</div>
+              <div class="student-name">${st.name}</div>
+              ${deptHtml}
+            </div>
+          </div>
+          <div class="student-status">${rightStatus}</div>
+        `;
+
+        listEl.appendChild(card);
+      });
+    }
+
+    function renderHrCumulativeStudentList(students, totalSessions) {
+      const listEl = document.getElementById('hr-student-list');
+      listEl.innerHTML = '';
+
+      students.forEach(st => {
+        const card = document.createElement('div');
+        card.className = 'student-card disabled';
+
+        const attended = st.totalPresent || 0;
+        const pct = totalSessions > 0 ? Math.round((attended / totalSessions) * 100) : 0;
+        
+        const deptHtml = st.dept && st.dept !== '-' ? `<div class="student-dept">🏢 ${st.dept}</div>` : '';
+
+        card.innerHTML = `
+          <div class="student-left">
+            <div class="student-no">${st.no}</div>
+            <div class="student-info">
+              <div class="student-nickname">${st.nickname || st.name}</div>
+              <div class="student-name">${st.name}</div>
+              ${deptHtml}
+              <div class="mini-progress-bg">
+                <div class="mini-progress-fill" style="width: ${pct}%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="student-status" style="text-align:right; margin-left:12px;">
+            <div style="font-size:1.05rem; font-weight:800; color:var(--primary);">${attended}/${totalSessions} ครั้ง</div>
+            <div style="font-size:0.82rem; font-weight:600; color:#555;">เข้าเรียน ${pct}%</div>
+          </div>
+        `;
+
+        listEl.appendChild(card);
+      });
+    }
+
+    function copyLineSummary() {
+      if (!appData) return;
+
+      const c = appData.courseInfo;
+      const students = appData.students;
+      const totalStudents = students.length;
+      const totalSessions = appData.totalSessionsCount || appData.sessions.length || 15;
+
+      let lineText = "";
+
+      if (selectedSessionDate === 'cumulative') {
+        let grandTotalPresent = 0;
+        students.forEach(s => grandTotalPresent += (s.totalPresent || 0));
+        const maxPossible = totalStudents * totalSessions;
+        const overallPct = maxPossible > 0 ? Math.round((grandTotalPresent / maxPossible) * 100) : 0;
+
+        let rankText = students.map(s => {
+          const pct = Math.round(((s.totalPresent || 0) / totalSessions) * 100);
+          return `• ${s.nickname || s.name}: ${s.totalPresent || 0}/${totalSessions} ครั้ง (${pct}%)`;
+        }).join('\n');
+
+        lineText = 
+`📊 สรุปสถิติการเข้าเรียนสะสม — B Tools Training
+🏢 บริษัท: ${c.company || '-'}
+📚 หลักสูตร: ${c.course || '-'}
+📈 อัตราการเข้าเรียนเฉลี่ยรวม: ${overallPct}%
+---------------------------------
+สรุปรายบุคคล (ทั้งหมด ${totalSessions} ครั้ง):
+${rankText}
+---------------------------------
+🔗 ตรวจสอบสด: ${window.location.href}`;
+
+      } else {
+        const targetDate = (selectedSessionDate === 'today') ? (appData.currentSessionDate || appData.todayDateStr) : selectedSessionDate;
+
+        const presentList = [];
+        const absentList = [];
+
+        students.forEach(st => {
+          let isP = false;
+          if (selectedSessionDate === 'today') {
+            isP = st.isChecked;
+          } else {
+            const histVal = (st.attendanceHistory && st.attendanceHistory[targetDate]) || "";
+            isP = (histVal.trim() !== "");
+          }
+
+          if (isP) presentList.push(st);
+          else absentList.push(st);
+        });
+
+        const pct = totalStudents > 0 ? Math.round((presentList.length / totalStudents) * 100) : 0;
+        let absentNames = absentList.map(s => s.nickname || s.name).join(', ');
+        if (!absentNames) absentNames = "- (มาครบทุกคน)";
+
+        lineText = 
+`📋 สรุปการเข้าเรียน — B Tools Training
+🏢 บริษัท: ${c.company || '-'}
+📚 หลักสูตร: ${c.course || '-'}
+📅 วันที่: ${targetDate}
+---------------------------------
+✅ มาเรียนแล้ว (Present): ${presentList.length}/${totalStudents} คน (${pct}%)
+❌ ยังไม่เช็คชื่อ (Absent): ${absentList.length} คน (${absentNames})
+---------------------------------
+🔗 ตรวจสอบสด: ${window.location.href}`;
+      }
+
+      navigator.clipboard.writeText(lineText).then(() => {
+        showToast("ก๊อปปี้รายงานสรุปส่ง LINE เรียบร้อยแล้ว! 📋");
+      }).catch(() => {
+        alert("กรุณาก๊อปปี้ข้อความนี้:\n\n" + lineText);
+      });
+    }
+
+    function openModal(student) {
+      if (!appData || !appData.isClassToday) {
+        alert("ขออภัย วันนี้ไม่มีรอบเรียน ไม่สามารถเช็คชื่อล่วงหน้าหรือย้อนหลังได้");
+        return;
+      }
+
+      // Strict Anti-Proxy Check
+      const deviceCheckedDate = localStorage.getItem(getDeviceCheckedDateKey(currentClassName));
+      const savedStudentNo = getLocalStoredStudent(currentClassName);
+
+      if (deviceCheckedDate === appData.currentSessionDate && savedStudentNo && String(savedStudentNo) !== String(student.no)) {
+        alert("⚠️ อุปกรณ์เครื่องนี้ได้ทำการเช็คชื่อในรอบวันนี้ไปแล้ว ไม่อนุญาตให้เช็คชื่อแทนผู้อื่นในวันเดียวกัน");
+        return;
+      }
+      
+      selectedStudent = student;
+      document.getElementById('modal-avatar').innerText = student.no;
+      document.getElementById('modal-title').innerText = `คุณ ${student.nickname || student.name}`;
+      document.getElementById('modal-subtitle').innerText = `${student.name} ${student.dept && student.dept !== '-' ? '(' + student.dept + ')' : ''}`;
+      document.getElementById('confirm-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      selectedStudent = null;
+      document.getElementById('confirm-modal').style.display = 'none';
+    }
+
+    async function confirmCheckIn() {
+      if (!selectedStudent || !currentClassName || !appData) return;
+      
+      const st = selectedStudent;
+      const sessionDate = appData.currentSessionDate;
+
+      closeModal();
+      showLoading(true);
+
+      try {
+        const res = await apiRequest("recordCheckIn", {
+          className: currentClassName,
+          studentNo: st.no,
+          sessionDateStr: sessionDate
+        });
+
+        showLoading(false);
+        if (res.success) {
+          setLocalStoredStudent(currentClassName, st.no);
+          try { localStorage.setItem(getDeviceCheckedDateKey(currentClassName), sessionDate); } catch(e){}
+          
+          showToast(`คุณ ${st.nickname || st.name} เช็คชื่อสำเร็จ!`);
+          renderClassData(res.updatedData);
+        } else {
+          alert('เกิดข้อผิดพลาด: ' + res.message);
+        }
+      } catch (err) {
+        handleError(err);
+      }
+    }
+
+    async function confirmUndoCheckIn(student) {
+      if (!student || !currentClassName || !appData) return;
+      
+      if (confirm(`ต้องการยกเลิกการเช็คชื่อวันนี้ของ "คุณ ${student.nickname || student.name}" ใช่หรือไม่?`)) {
+        showLoading(true);
+        try {
+          const res = await apiRequest("cancelCheckIn", {
+            className: currentClassName,
+            studentNo: student.no,
+            sessionDateStr: appData.currentSessionDate
+          });
+
+          showLoading(false);
+          if (res.success) {
+            try { localStorage.removeItem(getDeviceCheckedDateKey(currentClassName)); } catch(e){}
+            showToast(`ยกเลิกการเช็คชื่อเรียบร้อยแล้ว`);
+            renderClassData(res.updatedData);
+          } else {
+            alert('เกิดข้อผิดพลาด: ' + res.message);
+          }
+        } catch (err) {
+          handleError(err);
+        }
+      }
+    }
+
+    async function resetSavedStudent() {
+      const deviceCheckedDate = localStorage.getItem(getDeviceCheckedDateKey(currentClassName));
+      if (appData && appData.currentSessionDate && deviceCheckedDate === appData.currentSessionDate) {
+        alert("⚠️ อุปกรณ์เครื่องนี้ได้ทำการเช็คชื่อในรอบวันนี้ไปแล้ว ไม่สามารถสลับชื่อเพื่อไปเช็คชื่อให้ผู้อื่นได้ในวันเดียวกัน");
+        return;
+      }
+
+      if (confirm("ต้องการเปลี่ยนผู้ใช้งาน / สลับไปเลือกชื่ออื่นสำหรับอุปกรณ์เครื่องนี้ใช่หรือไม่?")) {
+        showLoading(true);
+        clearLocalStoredStudent(currentClassName);
+
+        try {
+          await apiRequest("resetDeviceIdentity", { className: currentClassName });
+          loadClassData(currentClassName);
+        } catch (err) {
+          loadClassData(currentClassName);
+        }
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    function handleError(err) {
+      showLoading(false);
+      alert("เกิดข้อผิดพลาด: " + err.message);
+    }
+  </script>
+</body>
+</html>
 
