@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ระบบเช็คชื่อเข้าเรียน - B Tools Training</title>
+
+  <!-- 
+  =============================================================================
+  ⚙️ CONFIGURATION: วางลิงก์ GOOGLE APPS SCRIPT WEB APP ที่นี่ (บรรทัดนี้ได้เลย!)
+  =============================================================================
+  -->
+  <script>
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR_DwzCJHTNOWe2e-PBebQn87BD7jyu6w9pjlkCFNDCCt3l8LtkG9S5wK888rfC301Ig/exec"; // 👈 วาง Web App URL จริงของคุณที่นี่
+  </script>
+  <!-- ============================================================================= -->
   
   <!-- Official Google Fonts: Sarabun (รองรับภาษาไทย 100% มีหัว อ่านง่าย สบายตา) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -80,7 +90,7 @@
       display: block;
     }
 
-    /* TOP RIGHT HR TOGGLE BUTTON (SHORT ENGLISH) */
+    /* TOP RIGHT HR TOGGLE BUTTON */
     .btn-hr-toggle {
       background: rgba(255, 255, 255, 0.22);
       color: white;
@@ -116,7 +126,20 @@
       line-height: 1.55;
     }
 
-    /* PERSONALIZED USER CARD (STUDENT VIEW) */
+    /* Subtle Sync Indicator in Header */
+    .sync-indicator {
+      font-size: 0.75rem;
+      background: rgba(0,0,0,0.15);
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+      opacity: 0.85;
+    }
+
+    /* PERSONALIZED USER CARD */
     .personal-card {
       background: white;
       border-radius: var(--radius);
@@ -124,11 +147,11 @@
       box-shadow: var(--shadow);
       margin-bottom: 14px;
       border: 2px solid var(--primary-light);
-      animation: fadeIn 0.3s ease;
+      animation: fadeIn 0.25s ease;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -320,7 +343,7 @@
       height: 100%;
       width: 0%;
       border-radius: 4px;
-      transition: width 0.4s ease;
+      transition: width 0.3s ease;
     }
 
     /* Notice */
@@ -491,9 +514,7 @@
       margin-top: 1px;
     }
 
-    /* =========================================
-       HR / TRAINER DASHBOARD VIEW STYLES
-       ========================================= */
+    /* HR / TRAINER DASHBOARD VIEW STYLES */
     .hr-control-card {
       background: white;
       padding: 14px 16px;
@@ -619,7 +640,7 @@
       transform: scale(0.97);
     }
 
-    /* Filter Tabs for HR */
+    /* Filter Tabs */
     .hr-tabs-wrapper {
       display: flex;
       background: #EEEEEE;
@@ -649,7 +670,7 @@
       font-weight: 700;
     }
 
-    /* Mini Progress Bar for Cumulative View */
+    /* Mini Progress Bar */
     .mini-progress-bg {
       background: #EEEEEE;
       height: 6px;
@@ -666,9 +687,7 @@
       transition: width 0.3s;
     }
 
-    /* =========================================
-       PIN CODE MODAL STYLES
-       ========================================= */
+    /* PIN CODE MODAL */
     .pin-input-field {
       width: 160px;
       height: 48px;
@@ -713,13 +732,13 @@
     }
 
     .spinner {
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
       border: 4px solid #FFE0B2;
       border-top: 4px solid var(--primary);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 12px;
+      animation: spin 0.7s linear infinite;
+      margin-bottom: 10px;
     }
 
     @keyframes spin {
@@ -844,7 +863,7 @@
   <!-- Loading State -->
   <div id="loading" class="loading-overlay">
     <div class="spinner"></div>
-    <div style="font-weight: 500; color: #555;">กำลังโหลดข้อมูล...</div>
+    <div style="font-weight: 500; color: #555;">กำลังเชื่อมต่อระบบ...</div>
   </div>
 
   <!-- NO CLASS ACCESS VIEW -->
@@ -861,13 +880,12 @@
   <!-- MAIN CLASS VIEW -->
   <div id="class-view" style="display: none;">
     
-    <!-- Header Card with Top Right Short English HR/Instructor Button -->
+    <!-- Header Card -->
     <header class="header-card">
       <div class="header-top-row">
         <div class="brand-logo-box">
           <img src="https://iili.io/CLrwrGa.png" alt="B Tools Training" class="header-logo-img">
         </div>
-        <!-- TOP-RIGHT SHORT ENGLISH TOGGLE BUTTON -->
         <button id="btn-toggle-role" class="btn-hr-toggle" onclick="handleRoleToggleClick()">
           🔒 HR / Instructor
         </button>
@@ -878,11 +896,12 @@
         <div>🏢 <span id="company-name">-</span> (<span id="class-duration">-</span>)</div>
         <div>⏰ <span id="schedule-text">-</span></div>
       </div>
+      <div id="sync-badge" class="sync-indicator" style="display: none;">
+        <span>🔄 ซิงค์ข้อมูลล่าสุด...</span>
+      </div>
     </header>
 
-    <!-- ==============================================
-         VIEW 1: STUDENT CHECK-IN SECTION (DEFAULT)
-         ============================================== -->
+    <!-- VIEW 1: STUDENT CHECK-IN SECTION (DEFAULT) -->
     <div id="student-view-section">
       <!-- PERSONALIZED USER CARD -->
       <div id="personal-card-container"></div>
@@ -918,9 +937,7 @@
       </main>
     </div>
 
-    <!-- ==============================================
-         VIEW 2: HR & TRAINER LIVE DASHBOARD SECTION
-         ============================================== -->
+    <!-- VIEW 2: HR & TRAINER LIVE DASHBOARD SECTION -->
     <div id="hr-view-section" style="display: none;">
       
       <!-- Trainer Emergency Unlock Box -->
@@ -940,7 +957,7 @@
         </select>
       </div>
 
-      <!-- KPI Stats Grid (Short English) -->
+      <!-- KPI Stats Grid -->
       <div class="hr-stats-grid">
         <div class="hr-stat-box">
           <div class="hr-stat-label" id="hr-stat-box1-label">Present</div>
@@ -961,7 +978,7 @@
         </button>
       </div>
 
-      <!-- Filter Tabs (Short English) -->
+      <!-- Filter Tabs -->
       <div id="hr-tabs-container" class="hr-tabs-wrapper">
         <button id="hr-tab-all" class="hr-tab-btn active" onclick="filterHrList('all')">All (<span id="hr-cnt-all">0</span>)</button>
         <button id="hr-tab-present" class="hr-tab-btn" onclick="filterHrList('present')">Present (<span id="hr-cnt-present">0</span>) 🟢</button>
@@ -976,7 +993,7 @@
 
   </div>
 
-  <!-- PIN ENTRY MODAL (HR / TRAINER ACCESS) -->
+  <!-- PIN ENTRY MODAL -->
   <div id="pin-modal" class="modal-backdrop">
     <div class="modal-content">
       <div class="modal-avatar" style="background:#FFF3E0; color:#E65100;">🔑</div>
@@ -993,7 +1010,7 @@
     </div>
   </div>
 
-  <!-- Confirmation Modal (Student Check-in) -->
+  <!-- Confirmation Modal -->
   <div id="confirm-modal" class="modal-backdrop">
     <div class="modal-content">
       <div id="modal-avatar" class="modal-avatar">1</div>
@@ -1015,40 +1032,47 @@
   </div>
 
   <script>
-    /**
-     * =========================================================================
-     * CONFIGURATION: GOOGLE APPS SCRIPT WEB APP API URL
-     * =========================================================================
-     * วาง URL ของ Google Apps Script Web App ที่นี่ สำหรับการรันบน GitHub Pages
-     */
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR_DwzCJHTNOWe2e-PBebQn87BD7jyu6w9pjlkCFNDCCt3l8LtkG9S5wK888rfC301Ig/exec"; // <-- แก้เป็น Web App URL จริงของคุณ
-
     const DEFAULT_HR_PIN = "0000";
     let currentClassName = "";
     let initialUserParam = "";
     let appData = null;
     let selectedStudent = null;
-    let currentViewMode = "student"; // 'student' or 'hr'
+    let currentViewMode = "student";
     let currentHrFilter = "all";
-    let selectedSessionDate = "today"; // 'today', 'cumulative', or '10-Apr-24'
+    let selectedSessionDate = "today";
 
-    /* Universal API Caller: Handles GitHub Pages (Fetch) & Native Apps Script Fallback */
+    /* High-Speed GET/POST Universal API Caller */
     async function apiRequest(action, params = {}) {
       const devToken = getDeviceToken();
       const devFp = getDeviceFingerprint();
-      const payload = { action: action, deviceToken: devToken, deviceFingerprint: devFp, ...params };
 
-      // 1. If running externally (GitHub Pages / Localhost)
+      // 1. If running externally (Vercel / GitHub Pages / Localhost)
       if (typeof google === 'undefined' || !google.script || !google.script.run) {
         try {
+          // FAST-PATH: Use GET for getClassData (30-50% faster than POST)
+          if (action === "getClassData") {
+            const query = new URLSearchParams({
+              action: "getClassData",
+              className: params.className || "",
+              deviceToken: devToken,
+              deviceFingerprint: devFp
+            });
+            const res = await fetch(`${GAS_API_URL}?${query.toString()}`, {
+              method: 'GET',
+              mode: 'cors'
+            });
+            return await res.json();
+          }
+
+          // Standard POST for data modification actions
+          const payload = { action: action, deviceToken: devToken, deviceFingerprint: devFp, ...params };
           const res = await fetch(GAS_API_URL, {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)
           });
-          const json = await res.json();
-          return json;
+          return await res.json();
         } catch (err) {
           throw new Error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: " + err.message);
         }
@@ -1085,7 +1109,6 @@
       });
     }
 
-    /* Clean time string: removes redundant ✔ and brackets to prevent duplicate icons */
     function cleanTimeString(rawTime) {
       if (!rawTime) return "";
       const cleaned = rawTime.toString().replace(/✔/g, "").replace(/[()]/g, "").trim();
@@ -1096,7 +1119,6 @@
       try {
         const nav = window.navigator || {};
         const scr = window.screen || {};
-        
         const components = [
           nav.userAgent || '',
           nav.language || '',
@@ -1107,10 +1129,8 @@
           nav.maxTouchPoints || '',
           Intl.DateTimeFormat().resolvedOptions().timeZone || ''
         ];
-        
-        const rawStr = components.join('###');
-        
         let hash = 5381;
+        const rawStr = components.join('###');
         for (let i = 0; i < rawStr.length; i++) {
           hash = ((hash << 5) + hash) + rawStr.charCodeAt(i);
           hash = hash & hash;
@@ -1124,12 +1144,10 @@
     function getDeviceToken() {
       let token = null;
       try { token = localStorage.getItem('bt_device_token'); } catch (e) {}
-      
       if (!token) {
         const match = document.cookie.match(/(?:^|; )bt_device_token=([^;]*)/);
         if (match) token = decodeURIComponent(match[1]);
       }
-      
       if (!token) {
         token = 'dev_' + Math.random().toString(36).substring(2, 12) + '_' + Date.now();
         saveDeviceToken(token);
@@ -1173,13 +1191,37 @@
       document.cookie = `${key}=; max-age=0; path=/; SameSite=Lax`;
     }
 
+    /* INSTANT OPTIMISTIC UI CACHE HELPER */
+    function getCachedClassData(className) {
+      try {
+        const raw = localStorage.getItem(`bt_cached_data_${className}`);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setCachedClassData(className, data) {
+      try {
+        localStorage.setItem(`bt_cached_data_${className}`, JSON.stringify(data));
+      } catch (e) {}
+    }
+
     window.onload = function() {
       const urlParams = new URLSearchParams(window.location.search);
       currentClassName = urlParams.get('class') || "";
       initialUserParam = urlParams.get('u') || "";
 
       if (currentClassName) {
-        loadClassData(currentClassName);
+        // ⚡ INSTANT LOAD: If cached data exists, render instantly in 0.01s!
+        const cached = getCachedClassData(currentClassName);
+        if (cached) {
+          renderClassData(cached);
+          document.getElementById('sync-badge').style.display = 'inline-flex';
+          fetchLiveClassData(currentClassName, true);
+        } else {
+          loadClassData(currentClassName);
+        }
       } else {
         showLoading(false);
         document.getElementById('no-class-view').style.display = 'block';
@@ -1192,18 +1234,26 @@
 
     async function loadClassData(className) {
       showLoading(true);
+      await fetchLiveClassData(className, false);
+    }
+
+    async function fetchLiveClassData(className, isBackgroundSync) {
       document.getElementById('no-class-view').style.display = 'none';
       document.getElementById('class-view').style.display = 'block';
 
       try {
         const res = await apiRequest("getClassData", { className: className });
         if (res.success && res.data) {
+          setCachedClassData(className, res.data);
           renderClassData(res.data);
+          document.getElementById('sync-badge').style.display = 'none';
         } else {
           throw new Error(res.message || "ไม่สามารถโหลดข้อมูลคลาสได้");
         }
       } catch (err) {
-        handleError(err);
+        if (!isBackgroundSync) handleError(err);
+      } finally {
+        showLoading(false);
       }
     }
 
@@ -1284,6 +1334,7 @@
           });
           showLoading(false);
           if (res.success) {
+            setCachedClassData(currentClassName, res.updatedData);
             showToast("เปิดรอบเรียนพิเศษสำเร็จแล้ว! 🚀");
             renderClassData(res.updatedData);
           } else {
@@ -1297,7 +1348,6 @@
 
     function renderClassData(data) {
       appData = data;
-      showLoading(false);
 
       if (data.courseInfo) {
         currentClassName = data.courseInfo.className;
@@ -1307,7 +1357,7 @@
         document.getElementById('schedule-text').innerText = data.courseInfo.schedule || '-';
       }
 
-      // Multi-Tier Identity Resolution: Cloud Bound ID -> URL Param -> LocalStorage -> Cookie
+      // Multi-Tier Identity Resolution
       let effectiveStudentNo = data.boundStudentNo;
       if (!effectiveStudentNo && initialUserParam) {
         effectiveStudentNo = initialUserParam;
@@ -1353,7 +1403,7 @@
       renderPersonalCard(savedStudent, data.isClassToday);
       renderStudentList(data.students, data.isClassToday, savedStudent);
 
-      // If on HR view, refresh HR dashboard too
+      // Refresh HR dashboard too if active
       if (currentViewMode === "hr") {
         initHrSessionSelector();
         renderHrDashboard();
@@ -1437,7 +1487,6 @@
 
       const headerTitle = document.getElementById('list-header-title');
       
-      // Clean header title
       if (savedStudent) {
         headerTitle.innerText = "สถานะการเข้าเรียนของเพื่อนร่วมคลาส 👥";
       } else {
@@ -1447,7 +1496,6 @@
       students.forEach(st => {
         if (st.isChecked) checkedCount++;
 
-        // Only clickable if device has NO saved student and is on valid class day
         const canClick = !savedStudent && isClassToday && !st.isChecked;
 
         const card = document.createElement('div');
@@ -1503,9 +1551,7 @@
       document.getElementById('progress-bar').style.width = percent + '%';
     }
 
-    /* =========================================
-       HR DASHBOARD & SESSION SELECTOR ENGINE
-       ========================================= */
+    /* HR DASHBOARD ENGINE */
     function initHrSessionSelector() {
       if (!appData || !appData.sessions) return;
 
@@ -1513,20 +1559,17 @@
       const prevVal = sel.value || selectedSessionDate;
       sel.innerHTML = '';
 
-      // Option 1: Today / Active Session
       const todayDate = appData.currentSessionDate;
       const optToday = document.createElement('option');
       optToday.value = 'today';
       optToday.innerText = `📅 รอบวันนี้ / ล่าสุด (${todayDate || appData.todayDateStr})`;
       sel.appendChild(optToday);
 
-      // Option 2: Cumulative All Sessions
       const optAll = document.createElement('option');
       optAll.value = 'cumulative';
       optAll.innerText = `📊 สรุปสถิติสะสมตลอดหลักสูตร (All Sessions)`;
       sel.appendChild(optAll);
 
-      // Option Group: Past/All Sessions
       const group = document.createElement('optgroup');
       group.label = "── ประวัติย้อนหลังแยกรายครั้ง ──";
 
@@ -1554,7 +1597,6 @@
       const totalStudents = students.length;
       const totalSessions = appData.totalSessionsCount || appData.sessions.length || 15;
 
-      // Emergency Unlock Box Visibility in HR View
       const emergencyBox = document.getElementById('hr-emergency-unlock-box');
       if (!appData.isClassToday) {
         emergencyBox.style.display = 'block';
@@ -1819,7 +1861,6 @@ ${rankText}
         return;
       }
 
-      // Strict Anti-Proxy Check
       const deviceCheckedDate = localStorage.getItem(getDeviceCheckedDateKey(currentClassName));
       const savedStudentNo = getLocalStoredStudent(currentClassName);
 
@@ -1859,6 +1900,7 @@ ${rankText}
         showLoading(false);
         if (res.success) {
           setLocalStoredStudent(currentClassName, st.no);
+          setCachedClassData(currentClassName, res.updatedData);
           try { localStorage.setItem(getDeviceCheckedDateKey(currentClassName), sessionDate); } catch(e){}
           
           showToast(`คุณ ${st.nickname || st.name} เช็คชื่อสำเร็จ!`);
@@ -1886,6 +1928,7 @@ ${rankText}
           showLoading(false);
           if (res.success) {
             try { localStorage.removeItem(getDeviceCheckedDateKey(currentClassName)); } catch(e){}
+            setCachedClassData(currentClassName, res.updatedData);
             showToast(`ยกเลิกการเช็คชื่อเรียบร้อยแล้ว`);
             renderClassData(res.updatedData);
           } else {
@@ -1933,4 +1976,3 @@ ${rankText}
   </script>
 </body>
 </html>
-
