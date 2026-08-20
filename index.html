@@ -129,14 +129,29 @@
     /* Subtle Sync Indicator in Header */
     .sync-indicator {
       font-size: 0.75rem;
-      background: rgba(0,0,0,0.15);
-      padding: 2px 8px;
+      background: rgba(0,0,0,0.18);
+      padding: 3px 10px;
       border-radius: 10px;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      margin-top: 4px;
-      opacity: 0.85;
+      gap: 5px;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #81C784;
+      display: inline-block;
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(0.8); opacity: 0.5; }
     }
 
     /* PERSONALIZED USER CARD */
@@ -147,11 +162,11 @@
       box-shadow: var(--shadow);
       margin-bottom: 14px;
       border: 2px solid var(--primary-light);
-      animation: fadeIn 0.25s ease;
+      animation: fadeIn 0.2s ease;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
+      from { opacity: 0; transform: translateY(3px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -514,7 +529,20 @@
       margin-top: 1px;
     }
 
-    /* HR / TRAINER DASHBOARD VIEW STYLES */
+    /* Skeleton Loading Placeholder */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 8px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* HR DASHBOARD VIEW STYLES */
     .hr-control-card {
       background: white;
       padding: 14px 16px;
@@ -715,30 +743,35 @@
       display: none;
     }
 
-    /* Loading Overlay */
+    /* First Time Initial Loader */
+    .first-load-skeleton {
+      display: none;
+    }
+
+    /* Loading Overlay (Only for Explicit Actions like PIN or Button Click) */
     .loading-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(255, 255, 255, 0.88);
-      display: flex;
+      background: rgba(255, 255, 255, 0.85);
+      display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      backdrop-filter: blur(3px);
+      backdrop-filter: blur(2px);
     }
 
     .spinner {
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border: 4px solid #FFE0B2;
       border-top: 4px solid var(--primary);
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     @keyframes spin {
@@ -860,10 +893,10 @@
 </head>
 <body>
 
-  <!-- Loading State -->
+  <!-- Loading State (For Modal/Action Clicks) -->
   <div id="loading" class="loading-overlay">
     <div class="spinner"></div>
-    <div style="font-weight: 500; color: #555;">กำลังเชื่อมต่อระบบ...</div>
+    <div id="loading-text" style="font-weight: 500; color: #555; font-size: 0.9rem;">กำลังบันทึกข้อมูล...</div>
   </div>
 
   <!-- NO CLASS ACCESS VIEW -->
@@ -877,8 +910,8 @@
     </div>
   </div>
 
-  <!-- MAIN CLASS VIEW -->
-  <div id="class-view" style="display: none;">
+  <!-- MAIN CLASS VIEW (IMMEDIATE RENDER) -->
+  <div id="class-view" style="display: block;">
     
     <!-- Header Card -->
     <header class="header-card">
@@ -891,13 +924,14 @@
         </button>
       </div>
       
-      <h1 class="course-title" id="course-name">Loading...</h1>
+      <h1 class="course-title" id="course-name">B Tools Training</h1>
       <div class="course-meta">
         <div>🏢 <span id="company-name">-</span> (<span id="class-duration">-</span>)</div>
         <div>⏰ <span id="schedule-text">-</span></div>
       </div>
-      <div id="sync-badge" class="sync-indicator" style="display: none;">
-        <span>🔄 ซิงค์ข้อมูลล่าสุด...</span>
+      <div id="sync-badge" class="sync-indicator">
+        <span class="sync-dot"></span>
+        <span id="sync-text">กำลังเชื่อมต่อข้อมูลสด...</span>
       </div>
     </header>
 
@@ -910,7 +944,7 @@
       <section class="session-card">
         <div class="session-title-row">
           <span>รอบการเรียนประจำวันนี้</span>
-          <span id="stat-text" style="color: var(--primary);">Present 0 คน</span>
+          <span id="stat-text" style="color: var(--primary);">กำลังตรวจสอบ...</span>
         </div>
         <div class="session-date-badge" id="session-display-badge">
           📅 กำลังตรวจสอบวันที่...
@@ -931,9 +965,27 @@
         <button class="refresh-btn" onclick="refreshCurrentClass()">🔄 รีเฟรช</button>
       </div>
 
-      <!-- Student Cards -->
+      <!-- Student Cards Container -->
       <main id="student-list" class="student-list">
-        <!-- Populated via JS -->
+        <!-- Fast Initial Shimmer Placeholders -->
+        <div class="student-card disabled" id="skeleton-1">
+          <div class="student-left">
+            <div class="skeleton" style="width:36px; height:36px; border-radius:50%;"></div>
+            <div style="flex:1;">
+              <div class="skeleton" style="width:50%; height:16px; margin-bottom:6px;"></div>
+              <div class="skeleton" style="width:75%; height:12px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="student-card disabled" id="skeleton-2">
+          <div class="student-left">
+            <div class="skeleton" style="width:36px; height:36px; border-radius:50%;"></div>
+            <div style="flex:1;">
+              <div class="skeleton" style="width:45%; height:16px; margin-bottom:6px;"></div>
+              <div class="skeleton" style="width:65%; height:12px;"></div>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
 
@@ -1049,7 +1101,6 @@
       // 1. If running externally (Vercel / GitHub Pages / Localhost)
       if (typeof google === 'undefined' || !google.script || !google.script.run) {
         try {
-          // FAST-PATH: Use GET for getClassData (30-50% faster than POST)
           if (action === "getClassData") {
             const query = new URLSearchParams({
               action: "getClassData",
@@ -1064,7 +1115,6 @@
             return await res.json();
           }
 
-          // Standard POST for data modification actions
           const payload = { action: action, deviceToken: devToken, deviceFingerprint: devFp, ...params };
           const res = await fetch(GAS_API_URL, {
             method: 'POST',
@@ -1207,59 +1257,63 @@
       } catch (e) {}
     }
 
+    /* ZERO-WAIT PAGE INITIALIZATION */
     window.onload = function() {
       const urlParams = new URLSearchParams(window.location.search);
       currentClassName = urlParams.get('class') || "";
       initialUserParam = urlParams.get('u') || "";
 
       if (currentClassName) {
-        // ⚡ INSTANT LOAD: If cached data exists, render instantly in 0.01s!
+        // ⚡ FAST-PATH: Render immediately from cache in 0.00s!
         const cached = getCachedClassData(currentClassName);
         if (cached) {
           renderClassData(cached);
           document.getElementById('sync-badge').style.display = 'inline-flex';
-          fetchLiveClassData(currentClassName, true);
-        } else {
-          loadClassData(currentClassName);
+          document.getElementById('sync-text').innerText = "กำลังซิงค์สถานะสด...";
         }
+        
+        // Background live fetch (Seamless, never blocks the screen)
+        fetchLiveClassData(currentClassName);
       } else {
-        showLoading(false);
+        document.getElementById('class-view').style.display = 'none';
         document.getElementById('no-class-view').style.display = 'block';
       }
     };
 
-    function showLoading(show) {
-      document.getElementById('loading').style.display = show ? 'flex' : 'none';
+    function showActionLoading(show, text = "กำลังบันทึกข้อมูล...") {
+      const loader = document.getElementById('loading');
+      document.getElementById('loading-text').innerText = text;
+      loader.style.display = show ? 'flex' : 'none';
     }
 
-    async function loadClassData(className) {
-      showLoading(true);
-      await fetchLiveClassData(className, false);
-    }
-
-    async function fetchLiveClassData(className, isBackgroundSync) {
-      document.getElementById('no-class-view').style.display = 'none';
-      document.getElementById('class-view').style.display = 'block';
-
+    async function fetchLiveClassData(className) {
       try {
         const res = await apiRequest("getClassData", { className: className });
         if (res.success && res.data) {
           setCachedClassData(className, res.data);
           renderClassData(res.data);
-          document.getElementById('sync-badge').style.display = 'none';
+          
+          const syncBadge = document.getElementById('sync-badge');
+          document.getElementById('sync-text').innerText = "ข้อมูลอัปเดตล่าสุดแล้ว ✔";
+          setTimeout(() => {
+            syncBadge.style.opacity = '0';
+            setTimeout(() => syncBadge.style.display = 'none', 300);
+          }, 1500);
         } else {
-          throw new Error(res.message || "ไม่สามารถโหลดข้อมูลคลาสได้");
+          document.getElementById('sync-text').innerText = "เชื่อมต่อเสร็จสิ้น";
         }
       } catch (err) {
-        if (!isBackgroundSync) handleError(err);
-      } finally {
-        showLoading(false);
+        document.getElementById('sync-text').innerText = "โหมดออฟไลน์ / ใช้ข้อมูลล่าสุด";
       }
     }
 
     function refreshCurrentClass() {
       if (currentClassName) {
-        loadClassData(currentClassName);
+        const syncBadge = document.getElementById('sync-badge');
+        syncBadge.style.display = 'inline-flex';
+        syncBadge.style.opacity = '0.9';
+        document.getElementById('sync-text').innerText = "กำลังรีเฟรช...";
+        fetchLiveClassData(currentClassName);
       }
     }
 
@@ -1326,13 +1380,13 @@
     async function handleEmergencyUnlockClick() {
       if (!currentClassName || !appData) return;
       if (confirm(`ยืนยันการเปิดรับเช็คชื่อรอบชดเชยพิเศษสำหรับวันนี้ (${appData.todayDateStr}) หรือไม่?`)) {
-        showLoading(true);
+        showActionLoading(true, "กำลังเปิดรอบเรียนพิเศษ...");
         try {
           const res = await apiRequest("openEmergencySession", {
             className: currentClassName,
             sessionDateStr: appData.todayDateStr
           });
-          showLoading(false);
+          showActionLoading(false);
           if (res.success) {
             setCachedClassData(currentClassName, res.updatedData);
             showToast("เปิดรอบเรียนพิเศษสำเร็จแล้ว! 🚀");
@@ -1881,6 +1935,7 @@ ${rankText}
       document.getElementById('confirm-modal').style.display = 'none';
     }
 
+    /* ⚡ INSTANT 0ms OPTIMISTIC CHECK-IN */
     async function confirmCheckIn() {
       if (!selectedStudent || !currentClassName || !appData) return;
       
@@ -1888,8 +1943,18 @@ ${rankText}
       const sessionDate = appData.currentSessionDate;
 
       closeModal();
-      showLoading(true);
 
+      // 1. Instant Optimistic UI Paint (User sees instant checkmark!)
+      const timeNow = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+      st.isChecked = true;
+      st.checkTime = `(${timeNow})`;
+      setLocalStoredStudent(currentClassName, st.no);
+      try { localStorage.setItem(getDeviceCheckedDateKey(currentClassName), sessionDate); } catch(e){}
+      
+      renderClassData(appData);
+      showToast(`คุณ ${st.nickname || st.name} เช็คชื่อสำเร็จ! ✔`);
+
+      // 2. Background Sync to Google Sheets
       try {
         const res = await apiRequest("recordCheckIn", {
           className: currentClassName,
@@ -1897,19 +1962,18 @@ ${rankText}
           sessionDateStr: sessionDate
         });
 
-        showLoading(false);
-        if (res.success) {
-          setLocalStoredStudent(currentClassName, st.no);
+        if (res.success && res.updatedData) {
           setCachedClassData(currentClassName, res.updatedData);
-          try { localStorage.setItem(getDeviceCheckedDateKey(currentClassName), sessionDate); } catch(e){}
-          
-          showToast(`คุณ ${st.nickname || st.name} เช็คชื่อสำเร็จ!`);
           renderClassData(res.updatedData);
         } else {
-          alert('เกิดข้อผิดพลาด: ' + res.message);
+          throw new Error(res.message || "บันทึกไม่สำเร็จ");
         }
       } catch (err) {
-        handleError(err);
+        // Revert on error
+        st.isChecked = false;
+        st.checkTime = "";
+        renderClassData(appData);
+        alert("เกิดข้อผิดพลาดในการบันทึก: " + err.message);
       }
     }
 
@@ -1917,7 +1981,7 @@ ${rankText}
       if (!student || !currentClassName || !appData) return;
       
       if (confirm(`ต้องการยกเลิกการเช็คชื่อวันนี้ของ "คุณ ${student.nickname || student.name}" ใช่หรือไม่?`)) {
-        showLoading(true);
+        showActionLoading(true, "กำลังยกเลิกการเช็คชื่อ...");
         try {
           const res = await apiRequest("cancelCheckIn", {
             className: currentClassName,
@@ -1925,7 +1989,7 @@ ${rankText}
             sessionDateStr: appData.currentSessionDate
           });
 
-          showLoading(false);
+          showActionLoading(false);
           if (res.success) {
             try { localStorage.removeItem(getDeviceCheckedDateKey(currentClassName)); } catch(e){}
             setCachedClassData(currentClassName, res.updatedData);
@@ -1948,14 +2012,16 @@ ${rankText}
       }
 
       if (confirm("ต้องการเปลี่ยนผู้ใช้งาน / สลับไปเลือกชื่ออื่นสำหรับอุปกรณ์เครื่องนี้ใช่หรือไม่?")) {
-        showLoading(true);
+        showActionLoading(true, "กำลังเปลี่ยนผู้ใช้งาน...");
         clearLocalStoredStudent(currentClassName);
 
         try {
           await apiRequest("resetDeviceIdentity", { className: currentClassName });
-          loadClassData(currentClassName);
+          showActionLoading(false);
+          fetchLiveClassData(currentClassName);
         } catch (err) {
-          loadClassData(currentClassName);
+          showActionLoading(false);
+          fetchLiveClassData(currentClassName);
         }
       }
     }
@@ -1970,7 +2036,7 @@ ${rankText}
     }
 
     function handleError(err) {
-      showLoading(false);
+      showActionLoading(false);
       alert("เกิดข้อผิดพลาด: " + err.message);
     }
   </script>
