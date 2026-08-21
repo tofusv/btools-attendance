@@ -1170,7 +1170,7 @@
       }
 
       let bottomConfigRow = '';
-      if (isTest) {
+      if (isTest && m.status !== 'none') {
         const linkStatusHtml = m.url 
           ? `<span style="color:#1565C0; font-weight:700; white-space:nowrap;">🔗 พร้อมใช้งาน ✏️</span>` 
           : `<span style="color:#D84315; font-weight:700; white-space:nowrap;">⚠️ ยังไม่ใส่ลิงก์ ✏️</span>`;
