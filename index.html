@@ -1639,7 +1639,7 @@
       appData.sessions.forEach((s, idx) => {
         const opt = document.createElement('option');
         opt.value = s.dateStr;
-        opt.innerText = `ครั้งที่ ${s.no || (idx + 1)} (${s.dateStr})`;
+        opt.innerText = s.display || `ครั้งที่ ${s.no || (idx + 1)} (${s.dateStr})`;
         group.appendChild(opt);
       });
       sel.appendChild(group);
