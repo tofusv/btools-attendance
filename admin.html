@@ -728,14 +728,12 @@
           <div class="form-group">
             <label class="form-label">🏷️ ชื่อคลาส (Sheet Name) *</label>
             <input type="text" id="fc-class-name" class="form-input" placeholder="เช่น SCG_Group1, Toyota_Class1, Eng_B1" required>
-            <!-- Smart Auto-Suggestion / Suffix Chips -->
-            <div style="display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; align-items: center;">
+            <!-- Smart Auto-Suggestion / Suffix Chips: Group 1, 2, 3 -->
+            <div style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; align-items: center;">
               <span style="font-size: 0.7rem; color: #78909C; font-weight: 600;">แนะนำ:</span>
-              <button type="button" onclick="applyClassNameSuffix('Group1')" class="btn-action" style="padding: 1px 6px; font-size: 0.7rem; background: white; border: 1px solid #CFD8DC;">+ Group1</button>
-              <button type="button" onclick="applyClassNameSuffix('Group2')" class="btn-action" style="padding: 1px 6px; font-size: 0.7rem; background: white; border: 1px solid #CFD8DC;">+ Group2</button>
-              <button type="button" onclick="applyClassNameSuffix('Class1')" class="btn-action" style="padding: 1px 6px; font-size: 0.7rem; background: white; border: 1px solid #CFD8DC;">+ Class1</button>
-              <button type="button" onclick="applyClassNameSuffix('Class2')" class="btn-action" style="padding: 1px 6px; font-size: 0.7rem; background: white; border: 1px solid #CFD8DC;">+ Class2</button>
-              <button type="button" onclick="applyClassNameSuffix('Sec1')" class="btn-action" style="padding: 1px 6px; font-size: 0.7rem; background: white; border: 1px solid #CFD8DC;">+ Sec1</button>
+              <button type="button" onclick="applyClassNameSuffix('Group 1')" class="btn-action" style="padding: 1px 8px; font-size: 0.72rem; background: white; border: 1px solid #CFD8DC;">+ Group 1</button>
+              <button type="button" onclick="applyClassNameSuffix('Group 2')" class="btn-action" style="padding: 1px 8px; font-size: 0.72rem; background: white; border: 1px solid #CFD8DC;">+ Group 2</button>
+              <button type="button" onclick="applyClassNameSuffix('Group 3')" class="btn-action" style="padding: 1px 8px; font-size: 0.72rem; background: white; border: 1px solid #CFD8DC;">+ Group 3</button>
             </div>
           </div>
         </div>
@@ -892,7 +890,7 @@
                 <input type="checkbox" id="fc-has-entry-test" checked> 📝 Entry Test
               </label>
               <input type="number" id="fc-entry-test-sess" class="form-input" style="width: 80px; padding: 6px 8px; font-size: 0.8rem;" value="1" min="1" placeholder="ครั้งที่">
-              <input type="url" id="fc-entry-test-url" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="ลิงก์ข้อสอบ (URL)">
+              <input type="text" id="fc-entry-test-url" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="ลิงก์ข้อสอบ เช่น forms.gle/... หรือ google.com">
             </div>
             <!-- Final Test -->
             <div style="display: flex; gap: 8px; align-items: center;">
@@ -900,7 +898,7 @@
                 <input type="checkbox" id="fc-has-final-test" checked> 🎓 Final Test
               </label>
               <input type="number" id="fc-final-test-sess" class="form-input" style="width: 80px; padding: 6px 8px; font-size: 0.8rem;" value="15" min="1" placeholder="ครั้งที่">
-              <input type="url" id="fc-final-test-url" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="ลิงก์ข้อสอบ (URL)">
+              <input type="text" id="fc-final-test-url" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="ลิงก์ข้อสอบ เช่น forms.gle/... หรือ google.com">
             </div>
             <!-- Final Report -->
             <div style="display: flex; gap: 8px; align-items: center;">
@@ -1020,7 +1018,7 @@
 
         <div class="form-group">
           <label class="form-label">🔗 ลิงก์แบบทดสอบ / Google Form (URL)</label>
-          <input type="url" id="mm-url" class="form-input" placeholder="https://forms.gle/... หรือ https://docs.google.com/forms/...">
+          <input type="text" id="mm-url" class="form-input" placeholder="เช่น forms.gle/... หรือ google.com">
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 18px;">
@@ -1225,6 +1223,16 @@
       });
     }
 
+    function cleanExamUrl(url) {
+      if (!url) return '';
+      let clean = url.toString().trim();
+      if (!clean) return '';
+      if (!clean.match(/^https?:\/\//i)) {
+        clean = 'https://' + clean;
+      }
+      return clean;
+    }
+
     function normalizeMilestoneObj(m, defaultSessionNo) {
       if (!m) return { status: "none", sessionNo: defaultSessionNo || 1, url: "" };
       if (typeof m === 'string') return { status: m, sessionNo: defaultSessionNo || 1, url: "" };
@@ -1241,7 +1249,7 @@
       return {
         status: status,
         sessionNo: parseInt(m.sessionNo || defaultSessionNo || 1),
-        url: (m.url || "").toString().trim()
+        url: cleanExamUrl(m.url)
       };
     }
 
@@ -1364,7 +1372,7 @@
       const key = document.getElementById('mm-key').value;
       const status = document.getElementById('mm-status').value;
       const sessionNo = parseInt(document.getElementById('mm-session-no').value) || 1;
-      const url = document.getElementById('mm-url').value.trim();
+      const url = cleanExamUrl(document.getElementById('mm-url').value);
 
       const c = adminData.classes.find(item => item.className === className);
       if (!c) return;
@@ -1608,11 +1616,11 @@
 
       const hasEntryTest = document.getElementById('fc-has-entry-test').checked;
       const entryTestSessionNo = parseInt(document.getElementById('fc-entry-test-sess').value) || 1;
-      const entryTestUrl = document.getElementById('fc-entry-test-url').value.trim();
+      const entryTestUrl = cleanExamUrl(document.getElementById('fc-entry-test-url').value);
 
       const hasFinalTest = document.getElementById('fc-has-final-test').checked;
       const finalTestSessionNo = parseInt(document.getElementById('fc-final-test-sess').value) || parseInt(totalSessions) || 15;
-      const finalTestUrl = document.getElementById('fc-final-test-url').value.trim();
+      const finalTestUrl = cleanExamUrl(document.getElementById('fc-final-test-url').value);
 
       const hasFinalReport = document.getElementById('fc-has-final-report').checked;
 
