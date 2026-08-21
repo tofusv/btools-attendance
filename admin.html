@@ -148,45 +148,32 @@
       margin-bottom: 22px;
     }
 
-    .kpi-card {
-      background: white;
-      padding: 18px 20px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      display: flex;
+    .filter-pill {
+      background: #F5F5F5;
+      color: #546E7A;
+      border: 1px solid #CFD8DC;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+      display: inline-flex;
       align-items: center;
-      gap: 16px;
-      border-left: 5px solid var(--primary);
+      gap: 4px;
     }
 
-    .kpi-icon-box {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: var(--primary-light);
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      flex-shrink: 0;
+    .filter-pill:hover {
+      background: #ECEFF1;
+      color: #37474F;
     }
 
-    .kpi-info {
-      flex: 1;
-    }
-
-    .kpi-label {
-      font-size: 0.84rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .kpi-value {
-      font-size: 1.65rem;
-      font-weight: 800;
-      color: var(--text-main);
-      line-height: 1.2;
+    .filter-pill.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 2px 6px rgba(230, 81, 0, 0.25);
     }
 
     /* SECTION HEADER */
@@ -671,35 +658,65 @@
       </div>
     </header>
 
-    <!-- KPI Overview Cards -->
-    <section class="kpi-grid">
-      <div class="kpi-card" style="border-left-color: #E65100;">
-        <div class="kpi-icon-box">📚</div>
-        <div class="kpi-info">
-          <div class="kpi-label">จำนวนคลาสทั้งหมด</div>
-          <div class="kpi-value" id="kpi-total-classes">0</div>
+    <!-- Power Search & Filters Bar -->
+    <section style="background: white; border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--border-color);">
+      <!-- Row 1: Search & Status Filter Pills -->
+      <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+        <div style="position: relative; flex: 2; min-width: 260px;">
+          <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #9E9E9E;">🔍</span>
+          <input type="text" id="filter-search-input" class="form-input" style="padding-left: 42px; border-radius: 12px;" placeholder="ค้นหาชื่อคลาส, บริษัท, หลักสูตร, ผู้สอน..." oninput="applyDashboardFilters()">
         </div>
-      </div>
-      <div class="kpi-card" style="border-left-color: #1976D2;">
-        <div class="kpi-icon-box" style="background:#E3F2FD; color:#1976D2;">👥</div>
-        <div class="kpi-info">
-          <div class="kpi-label">จำนวนนักเรียนทั้งหมด</div>
-          <div class="kpi-value" id="kpi-total-students">0</div>
+
+        <!-- Status Filter Pills -->
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+          <button type="button" class="filter-pill active" id="pill-all" onclick="setStatusFilter('all')">ทั้งหมด (<span id="filter-count-all">0</span>)</button>
+          <button type="button" class="filter-pill" id="pill-ongoing" onclick="setStatusFilter('ongoing')">🟢 กำลังเรียน (<span id="filter-count-ongoing">0</span>)</button>
+          <button type="button" class="filter-pill" id="pill-completed" onclick="setStatusFilter('completed')">🏁 จบคอร์สแล้ว (<span id="filter-count-completed">0</span>)</button>
         </div>
+
+        <button type="button" class="btn-action" style="padding: 8px 14px; font-size: 0.82rem; margin-left: auto;" onclick="resetDashboardFilters()">
+          🔄 ล้างตัวกรอง
+        </button>
       </div>
-      <div class="kpi-card" style="border-left-color: #2E7D32;">
-        <div class="kpi-icon-box" style="background:#E8F5E9; color:#2E7D32;">📈</div>
-        <div class="kpi-info">
-          <div class="kpi-label">อัตราการเข้าเรียนเฉลี่ยรวม</div>
-          <div class="kpi-value" id="kpi-overall-rate" style="color: #2E7D32;">0%</div>
+
+      <!-- Row 2: Dropdown Select Filters -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+        <div>
+          <label style="font-size: 0.76rem; font-weight: 700; color: #546E7A; margin-bottom: 4px; display: block;">🏢 บริษัท / องค์กร</label>
+          <select id="filter-company-select" class="form-input" style="padding: 7px 10px; font-size: 0.85rem; border-radius: 8px;" onchange="applyDashboardFilters()">
+            <option value="all">ทั้งหมด (All Companies)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.76rem; font-weight: 700; color: #546E7A; margin-bottom: 4px; display: block;">👨‍🏫 ผู้สอน (Instructor)</label>
+          <select id="filter-instructor-select" class="form-input" style="padding: 7px 10px; font-size: 0.85rem; border-radius: 8px;" onchange="applyDashboardFilters()">
+            <option value="all">ทั้งหมด (All Instructors)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.76rem; font-weight: 700; color: #546E7A; margin-bottom: 4px; display: block;">📍 รูปแบบการเรียน (Format)</label>
+          <select id="filter-format-select" class="form-input" style="padding: 7px 10px; font-size: 0.85rem; border-radius: 8px;" onchange="applyDashboardFilters()">
+            <option value="all">ทั้งหมด (All Formats)</option>
+            <option value="On-site">🏫 On-site</option>
+            <option value="Online">💻 Online</option>
+            <option value="Hybrid">🔄 Hybrid</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.76rem; font-weight: 700; color: #546E7A; margin-bottom: 4px; display: block;">📋 การประเมิน (Milestones)</label>
+          <select id="filter-milestone-select" class="form-input" style="padding: 7px 10px; font-size: 0.85rem; border-radius: 8px;" onchange="applyDashboardFilters()">
+            <option value="all">ทั้งหมด (All Milestones)</option>
+            <option value="pending-test">⏳ มีแบบทดสอบที่ยังไม่ทำ</option>
+            <option value="done-test">✔ ทำแบบทดสอบครบแล้ว</option>
+          </select>
         </div>
       </div>
     </section>
 
-    <!-- Classes Section -->
+    <!-- Classes Section Header -->
     <div class="section-header">
       <div class="section-title">
-        <span>📋 รายการคลาสเรียนทั้งหมด</span>
+        <span id="classes-header-title">📋 รายการคลาสเรียน</span>
       </div>
     </div>
 
@@ -728,12 +745,11 @@
           <div class="form-group">
             <label class="form-label">🏷️ ชื่อคลาส (Sheet Name) *</label>
             <input type="text" id="fc-class-name" class="form-input" placeholder="เช่น SCG_Group1, Toyota_Class1, Eng_B1" required>
-            <!-- Smart Auto-Suggestion / Suffix Chips: Group 1, 2, 3 -->
+            <!-- Smart Auto-Suggestion / Suffix Chips: Group 1, 2 -->
             <div style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; align-items: center;">
               <span style="font-size: 0.7rem; color: #78909C; font-weight: 600;">แนะนำ:</span>
               <button type="button" onclick="applyClassNameSuffix('Group 1')" class="btn-action" style="padding: 1px 8px; font-size: 0.72rem; background: white; border: 1px solid #CFD8DC;">+ Group 1</button>
               <button type="button" onclick="applyClassNameSuffix('Group 2')" class="btn-action" style="padding: 1px 8px; font-size: 0.72rem; background: white; border: 1px solid #CFD8DC;">+ Group 2</button>
-              <button type="button" onclick="applyClassNameSuffix('Group 3')" class="btn-action" style="padding: 1px 8px; font-size: 0.72rem; background: white; border: 1px solid #CFD8DC;">+ Group 3</button>
             </div>
           </div>
         </div>
@@ -890,7 +906,7 @@
                 <input type="checkbox" id="fc-has-entry-test" checked> 📝 Entry Test
               </label>
               <input type="number" id="fc-entry-test-sess" class="form-input" style="width: 80px; padding: 6px 8px; font-size: 0.8rem;" value="1" min="1" placeholder="ครั้งที่">
-              <input type="text" id="fc-entry-test-url" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="ลิงก์ข้อสอบ เช่น forms.gle/... หรือ google.com">
+              <input type="text" id="fc-entry-test-url" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="forms.gle/... หรือ ลิงก์">
             </div>
             <!-- Final Test -->
             <div style="display: flex; gap: 8px; align-items: center;">
@@ -898,7 +914,7 @@
                 <input type="checkbox" id="fc-has-final-test" checked> 🎓 Final Test
               </label>
               <input type="number" id="fc-final-test-sess" class="form-input" style="width: 80px; padding: 6px 8px; font-size: 0.8rem;" value="15" min="1" placeholder="ครั้งที่">
-              <input type="text" id="fc-final-test-url" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="ลิงก์ข้อสอบ เช่น forms.gle/... หรือ google.com">
+              <input type="text" id="fc-final-test-url" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="forms.gle/... หรือ ลิงก์">
             </div>
             <!-- Final Report -->
             <div style="display: flex; gap: 8px; align-items: center;">
@@ -1013,12 +1029,12 @@
         <div class="form-group">
           <label class="form-label">🎯 ครั้งที่เรียนที่จะให้แสดงในหน้านักเรียน (Session No.)</label>
           <input type="number" id="mm-session-no" class="form-input" min="1" max="50" required placeholder="เช่น 1 หรือ 15">
-          <small style="color:var(--text-muted); font-size:0.75rem;">เมื่อถึงรอบเรียนครั้งนี้ ลิงก์ข้อสอบจะไปโผล่ที่หน้าเช็คชื่อของนักเรียนโดยอัตโนมัติ</small>
+          <small style="color:var(--text-muted); font-size:0.75rem;">จะแสดงในหน้านักเรียนเมื่อถึงรอบนี้</small>
         </div>
 
         <div class="form-group">
           <label class="form-label">🔗 ลิงก์แบบทดสอบ / Google Form (URL)</label>
-          <input type="text" id="mm-url" class="form-input" placeholder="เช่น forms.gle/... หรือ google.com">
+          <input type="text" id="mm-url" class="form-input" placeholder="forms.gle/... หรือ ลิงก์">
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 18px;">
@@ -1132,24 +1148,158 @@
     /* =========================================================================
        RENDER DASHBOARD
        ========================================================================= */
-    function renderAdminDashboard(data) {
-      document.getElementById('kpi-total-classes').innerText = data.summary.totalClasses || 0;
-      document.getElementById('kpi-total-students').innerText = `${data.summary.totalStudents || 0} คน`;
-      document.getElementById('kpi-overall-rate').innerText = `${data.summary.overallAttendanceRate || 0}%`;
+    /* =========================================================================
+       POWER SEARCH & DASHBOARD FILTERS
+       ========================================================================= */
+    let currentStatusFilter = 'all';
 
-      if (data.summary.spreadsheetUrl) {
+    function renderAdminDashboard(data) {
+      if (data.summary && data.summary.spreadsheetUrl) {
         document.getElementById('btn-open-sheet').href = data.summary.spreadsheetUrl;
       }
+      populateFilterDropdowns(data.classes || []);
+      applyDashboardFilters();
+    }
 
+    function populateFilterDropdowns(classes) {
+      const compSelect = document.getElementById('filter-company-select');
+      const instSelect = document.getElementById('filter-instructor-select');
+
+      const savedComp = compSelect ? compSelect.value : 'all';
+      const savedInst = instSelect ? instSelect.value : 'all';
+
+      // Extract unique companies
+      const companies = Array.from(new Set(classes.map(c => (c.company || '').trim()).filter(Boolean))).sort();
+      let compHtml = '<option value="all">🏢 ทั้งหมด (All Companies)</option>';
+      companies.forEach(comp => {
+        compHtml += `<option value="${escapeHtml(comp)}">${escapeHtml(comp)}</option>`;
+      });
+      if (compSelect) {
+        compSelect.innerHTML = compHtml;
+        if (companies.includes(savedComp)) compSelect.value = savedComp;
+      }
+
+      // Extract unique instructors
+      const instructors = Array.from(new Set(classes.map(c => (c.instructor || '').trim()).filter(Boolean))).sort();
+      let instHtml = '<option value="all">👨‍🏫 ทั้งหมด (All Instructors)</option>';
+      instructors.forEach(inst => {
+        instHtml += `<option value="${escapeHtml(inst)}">${escapeHtml(inst)}</option>`;
+      });
+      if (instSelect) {
+        instSelect.innerHTML = instHtml;
+        if (instructors.includes(savedInst)) instSelect.value = savedInst;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function setStatusFilter(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `pill-${status}`);
+      });
+      applyDashboardFilters();
+    }
+
+    function resetDashboardFilters() {
+      document.getElementById('filter-search-input').value = '';
+      document.getElementById('filter-company-select').value = 'all';
+      document.getElementById('filter-instructor-select').value = 'all';
+      document.getElementById('filter-format-select').value = 'all';
+      document.getElementById('filter-milestone-select').value = 'all';
+      setStatusFilter('all');
+    }
+
+    function applyDashboardFilters() {
+      if (!adminData || !adminData.classes) return;
+
+      const classes = adminData.classes;
+      const q = (document.getElementById('filter-search-input').value || '').toLowerCase().trim();
+      const comp = document.getElementById('filter-company-select').value;
+      const inst = document.getElementById('filter-instructor-select').value;
+      const fmt = document.getElementById('filter-format-select').value;
+      const ml = document.getElementById('filter-milestone-select').value;
+
+      // Calculate pill counts
+      const totalCount = classes.length;
+      const ongoingCount = classes.filter(c => (c.completedSessions || 0) < (c.totalSessions || 15)).length;
+      const completedCount = classes.filter(c => (c.completedSessions || 0) >= (c.totalSessions || 15)).length;
+
+      document.getElementById('filter-count-all').innerText = totalCount;
+      document.getElementById('filter-count-ongoing').innerText = ongoingCount;
+      document.getElementById('filter-count-completed').innerText = completedCount;
+
+      const filtered = classes.filter(c => {
+        const totalSess = c.totalSessions || 15;
+        const compSess = c.completedSessions || 0;
+        const isComplete = compSess >= totalSess;
+
+        // 1. Status Pill Filter
+        if (currentStatusFilter === 'ongoing' && isComplete) return false;
+        if (currentStatusFilter === 'completed' && !isComplete) return false;
+
+        // 2. Company Dropdown
+        if (comp !== 'all' && (c.company || '').trim() !== comp) return false;
+
+        // 3. Instructor Dropdown
+        if (inst !== 'all' && (c.instructor || '').trim() !== inst) return false;
+
+        // 4. Format Dropdown
+        if (fmt !== 'all' && !(c.learningFormat || '').toLowerCase().includes(fmt.toLowerCase())) return false;
+
+        // 5. Milestone Dropdown
+        if (ml === 'pending-test') {
+          const m = c.milestones || {};
+          const hasPending = (m.entryTest && m.entryTest.status === 'pending') || (m.finalTest && m.finalTest.status === 'pending');
+          if (!hasPending) return false;
+        } else if (ml === 'done-test') {
+          const m = c.milestones || {};
+          const isDone = (m.entryTest && m.entryTest.status === 'done') && (m.finalTest && m.finalTest.status === 'done');
+          if (!isDone) return false;
+        }
+
+        // 6. Search Query
+        if (q) {
+          const searchStr = `${c.className} ${c.company || ''} ${c.course || ''} ${c.instructor || ''} ${c.schedule || ''}`.toLowerCase();
+          if (!searchStr.includes(q)) return false;
+        }
+
+        return true;
+      });
+
+      // Update Section Header Title
+      const headerTitle = document.getElementById('classes-header-title');
+      if (headerTitle) {
+        if (filtered.length === totalCount) {
+          headerTitle.innerText = `📋 รายการคลาสเรียนทั้งหมด (${totalCount} คลาส)`;
+        } else {
+          headerTitle.innerHTML = `📋 ผลการกรอง: <span style="color:var(--primary); font-weight:800;">${filtered.length}</span> จากทั้งหมด ${totalCount} คลาส`;
+        }
+      }
+
+      renderClassCards(filtered);
+    }
+
+    function renderClassCards(classesToRender) {
       const container = document.getElementById('class-grid-container');
       container.innerHTML = '';
 
-      if (!data.classes || data.classes.length === 0) {
-        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#9E9E9E;">ยังไม่มีคลาสเรียน</div>`;
+      if (!classesToRender || classesToRender.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column:1/-1; text-align:center; padding:60px 20px; background:white; border-radius:16px; border:1.5px dashed #CFD8DC;">
+            <div style="font-size:2.5rem; margin-bottom:10px;">🔍</div>
+            <div style="font-weight:700; font-size:1.1rem; color:#455A64;">ไม่พบคลาสเรียนที่ตรงกับเงื่อนไขการค้นหา</div>
+            <div style="font-size:0.85rem; color:#78909C; margin-top:4px;">ลองเปลี่ยนคำค้นหา หรือกดปุ่ม "ล้างตัวกรอง" เพื่อดูคลาสทั้งหมด</div>
+            <button class="btn-action" style="margin:14px auto 0;" onclick="resetDashboardFilters()">🔄 ล้างตัวกรองทั้งหมด</button>
+          </div>
+        `;
         return;
       }
 
-      data.classes.forEach(c => {
+      classesToRender.forEach(c => {
         const card = document.createElement('div');
         card.className = 'class-card';
 
@@ -1159,9 +1309,9 @@
         const completedSess = c.completedSessions || 0;
         const sessionProgressPercent = totalSess > 0 ? Math.min(100, Math.round((completedSess / totalSess) * 100)) : 0;
         const milestones = c.milestones || {
-          entryTest: { enabled: true, done: false },
-          finalTest: { enabled: true, done: false },
-          finalReport: { enabled: true, done: false }
+          entryTest: { status: "pending", sessionNo: 1, url: "" },
+          finalTest: { status: "pending", sessionNo: totalSess, url: "" },
+          finalReport: { status: "pending" }
         };
 
         card.innerHTML = `
