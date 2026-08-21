@@ -1473,8 +1473,17 @@
       if (data.activeExams && data.activeExams.length > 0) {
         const isStudentCheckedIn = savedStudent && savedStudent.isChecked;
 
+        const cleanExamUrl = (u) => {
+          if (!u) return '';
+          let s = u.toString().trim();
+          if (!s) return '';
+          if (!s.match(/^https?:\/\//i)) s = 'https://' + s;
+          return s;
+        };
+
         data.activeExams.forEach(exam => {
           let examBanner = '';
+          const targetUrl = cleanExamUrl(exam.url);
           if (isStudentCheckedIn) {
             // UNLOCKED: Student has checked in -> Show clickable exam container!
             examBanner = `
@@ -1486,7 +1495,7 @@
                     <div style="font-size: 0.84rem; color: #2E7D32; margin-top: 2px;">คุณเช็คชื่อเรียบร้อยแล้ว กรุณาแตะทำแบบทดสอบประจำครั้งที่ ${exam.sessionNo}</div>
                   </div>
                 </div>
-                <a href="${exam.url}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background: #2E7D32; color: white; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 0.92rem; text-decoration: none; box-shadow: 0 3px 10px rgba(46,125,50,0.3); white-space: nowrap; flex-shrink: 0;">
+                <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; background: #2E7D32; color: white; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 0.92rem; text-decoration: none; box-shadow: 0 3px 10px rgba(46,125,50,0.3); white-space: nowrap; flex-shrink: 0;">
                   ทำข้อสอบ 🔗
                 </a>
               </div>
