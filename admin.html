@@ -1355,6 +1355,9 @@
             <a class="btn-class-action highlight" href="index.html?class=${encodeURIComponent(c.className)}" target="_blank">
               📱 หน้านักเรียน
             </a>
+            <a class="btn-class-action" href="${c.sheetUrl || (adminData && adminData.summary && adminData.summary.spreadsheetUrl) || '#'}" target="_blank" style="background: #E8F5E9; color: #1B5E20; border: 1px solid #C8E6C9; font-weight: 700;">
+              📊 Google Sheet
+            </a>
             <button class="btn-class-action" onclick="openQrModal('${c.className}')">
               🖨️ QR Code
             </button>
@@ -1364,8 +1367,8 @@
             <button class="btn-class-action" onclick="copyClassLineSummary('${c.className}')">
               💬 สรุป LINE
             </button>
-            <button class="btn-class-action" style="grid-column: 1 / -1; background: #FFF3E0; color: #E65100; font-weight: 700; border: 1px solid #FFE082;" onclick="printA4ClassSheet('${c.className}')">
-              📄 พิมพ์เอกสารคลาส A4 (Print to PDF) 🖨️
+            <button class="btn-class-action" style="background: #FFF3E0; color: #E65100; font-weight: 700; border: 1px solid #FFE082;" onclick="printA4ClassSheet('${c.className}')">
+              📄 พิมพ์เอกสาร A4
             </button>
           </div>
         `;
