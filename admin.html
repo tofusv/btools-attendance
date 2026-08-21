@@ -1135,25 +1135,87 @@
       return await res.json();
     }
 
-    async function loadAdminDashboardData() {
-      showLoading(true, "กำลังโหลดข้อมูลส่วนกลาง...");
+    function formatLongDate(dateInput) {
+      if (!dateInput) return '-';
+      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      
+      if (typeof dateInput === 'string') {
+        const cleanStr = dateInput.trim();
+        // Match YYYY-MM-DD
+        const isoMatch = cleanStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (isoMatch) {
+          const y = parseInt(isoMatch[1]);
+          const m = parseInt(isoMatch[2]) - 1;
+          const d = parseInt(isoMatch[3]);
+          if (m >= 0 && m < 12) {
+            return `${d} ${months[m]} ${y}`;
+          }
+        }
+        // Match DD/MM/YYYY or DD-MM-YYYY
+        const dmyMatch = cleanStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (dmyMatch) {
+          const d = parseInt(dmyMatch[1]);
+          const m = parseInt(dmyMatch[2]) - 1;
+          const y = parseInt(dmyMatch[3]);
+          if (m >= 0 && m < 12) {
+            return `${d} ${months[m]} ${y}`;
+          }
+        }
+        const dObj = new Date(cleanStr);
+        if (!isNaN(dObj.getTime())) {
+          return `${dObj.getDate()} ${months[dObj.getMonth()]} ${dObj.getFullYear()}`;
+        }
+        return cleanStr;
+      }
+      
+      if (dateInput instanceof Date && !isNaN(dateInput.getTime())) {
+        return `${dateInput.getDate()} ${months[dateInput.getMonth()]} ${dateInput.getFullYear()}`;
+      }
+      
+      return dateInput.toString();
+    }
+
+    async function loadAdminDashboardData(forceSpinner = false) {
+      // ⚡ Instant Cache Render (0ms SWR)
+      const cached = localStorage.getItem('admin_dashboard_cache');
+      let hasCache = false;
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.classes) {
+            adminData = parsed;
+            renderAdminDashboard(adminData);
+            hasCache = true;
+          }
+        } catch(e) {}
+      }
+
+      if (!hasCache || forceSpinner) {
+        showLoading(true, "กำลังโหลดข้อมูลส่วนกลาง...");
+      }
+
       try {
         const res = await adminApiRequest("getAdminDashboardData");
-        showLoading(false);
         if (res.success && res.data) {
           adminData = res.data;
+          try {
+            localStorage.setItem('admin_dashboard_cache', JSON.stringify(adminData));
+          } catch(e) {}
           renderAdminDashboard(adminData);
-        } else {
+        } else if (!hasCache) {
           throw new Error(res.message || "ไม่สามารถดึงข้อมูลได้");
         }
       } catch (err) {
+        if (!hasCache) {
+          alert("ไม่สามารถโหลดข้อมูลได้: " + err.message);
+        }
+      } finally {
         showLoading(false);
-        alert("ไม่สามารถโหลดข้อมูลได้: " + err.message);
       }
     }
 
     function refreshAdminData() {
-      loadAdminDashboardData();
+      loadAdminDashboardData(true);
     }
 
     function showLoading(show, text = "กำลังประมวลผล...") {
@@ -2239,12 +2301,16 @@ ${rankText}
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 16px;">
             <!-- Left Header -->
             <div style="flex: 1;">
-              <!-- Dual Logos: B Tools Training + Client Logo -->
-              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                <img src="https://iili.io/CLrwrGa.png" style="height: 38px; width: auto; object-fit: contain; display: block;" alt="B Tools Training">
+              <!-- Dual Logos: B Tools Training + Client Logo (Equal Visual Scale) -->
+              <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
+                <div style="height: 48px; display: flex; align-items: center;">
+                  <img src="https://iili.io/CLrwrGa.png" style="height: 40px; width: auto; object-fit: contain; display: block;" alt="B Tools Training">
+                </div>
                 ${c.clientLogoUrl ? `
-                  <span style="color: #CFD8DC; font-size: 1.6rem; font-weight: 300; line-height: 1;">|</span>
-                  <img src="${c.clientLogoUrl}" style="height: 38px; max-width: 170px; object-fit: contain; display: block;" alt="${escapeHtml(c.company || 'Client')} Logo">
+                  <span style="color: #CFD8DC; font-size: 1.8rem; font-weight: 300; line-height: 1;">|</span>
+                  <div style="height: 48px; display: flex; align-items: center; justify-content: center;">
+                    <img src="${c.clientLogoUrl}" style="max-height: 48px; max-width: 180px; width: auto; height: auto; object-fit: contain; display: block;" alt="${escapeHtml(c.company || 'Client')} Logo">
+                  </div>
                 ` : ''}
               </div>
 
@@ -2255,7 +2321,7 @@ ${rankText}
                 <div class="meta-item"><b>Class:</b> ${c.classDuration || '-'}</div>
                 <div class="meta-item"><b>Schedule:</b> ${c.schedule || '-'}</div>
                 <div class="meta-item"><b>Location:</b> ${c.location || '-'}</div>
-                <div class="meta-item"><b>Start date:</b> ${c.startDate || '-'}</div>
+                <div class="meta-item"><b>Start date:</b> ${formatLongDate(c.startDate)}</div>
               </div>
             </div>
 
