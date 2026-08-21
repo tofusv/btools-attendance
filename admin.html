@@ -789,15 +789,12 @@
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="color: #0D47A1; font-weight: 700;">⏳ เรียนครั้งละกี่ชั่วโมง</label>
               <select id="fc-hours-per-session" class="form-input" style="font-weight: 700; color: #0D47A1; background: white;" onchange="onHoursPerSessionChange()">
-                <option value="1">1 ชั่วโมง (1 ชม.)</option>
-                <option value="1.5" selected>1.30 ชม. (1 ชั่วโมง 30 นาที)</option>
-                <option value="2">2 ชั่วโมง (2 ชม.)</option>
-                <option value="2.5">2.30 ชม. (2 ชั่วโมง 30 นาที)</option>
-                <option value="3">3 ชั่วโมง (3 ชม.)</option>
-                <option value="4">4 ชั่วโมง (4 ชม.)</option>
-                <option value="custom">กำหนดเอง (ระบุ ชม.)...</option>
+                <option value="1">1 ชม.</option>
+                <option value="1.5" selected>1.30 ชม.</option>
+                <option value="2">2 ชม.</option>
+                <option value="custom">กำหนดเอง...</option>
               </select>
-              <input type="number" id="fc-custom-hours-input" class="form-input" style="display: none; margin-top: 6px; background: white;" step="0.25" min="0.25" max="24" placeholder="เช่น 1.25 หรือ 1.75" oninput="recalcSessions()">
+              <input type="number" id="fc-custom-hours-input" class="form-input" style="display: none; margin-top: 6px; background: white;" step="0.25" min="0.25" max="24" placeholder="ระบุ ชม. เช่น 2.5" oninput="recalcSessions()">
             </div>
           </div>
 
@@ -817,21 +814,12 @@
           </div>
         </div>
 
-        <!-- 📅 Smart Days & Time Slots Box (เช้าถึงเย็น) -->
+        <!-- 📅 วันเรียน & เวลาเรียน -->
         <div style="background: #FFFDF7; border: 1.5px solid #FFE082; border-radius: 14px; padding: 12px 14px; margin-bottom: 16px;">
           <!-- Days of Week Section -->
-          <div style="margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
-              <label class="form-label" style="margin: 0; color: #B26A00; font-weight: 700;">📅 วันเรียนประจำสัปดาห์ *</label>
-              <!-- Quick Days Presets -->
-              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                <button type="button" onclick="setWeekdayPreset([1,3,5])" class="btn-action" style="padding: 1px 7px; font-size: 0.7rem; background: white; border: 1px solid #FFD54F;">จ, พ, ศ</button>
-                <button type="button" onclick="setWeekdayPreset([2,4])" class="btn-action" style="padding: 1px 7px; font-size: 0.7rem; background: white; border: 1px solid #FFD54F;">อ, พฤ</button>
-                <button type="button" onclick="setWeekdayPreset([6,0])" class="btn-action" style="padding: 1px 7px; font-size: 0.7rem; background: white; border: 1px solid #FFD54F;">ส - อา</button>
-                <button type="button" onclick="setWeekdayPreset([1,2,3,4,5])" class="btn-action" style="padding: 1px 7px; font-size: 0.7rem; background: white; border: 1px solid #FFD54F;">จ - ศ</button>
-              </div>
-            </div>
-            <div class="weekday-checkbox-group" style="margin-top: 4px;">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" style="color: #B26A00; font-weight: 700;">📅 วันเรียนประจำสัปดาห์ *</label>
+            <div class="weekday-checkbox-group">
               <label class="weekday-label"><input type="checkbox" name="fc-days" value="1" onchange="onScheduleParamsChange()"> จันทร์</label>
               <label class="weekday-label"><input type="checkbox" name="fc-days" value="2" onchange="onScheduleParamsChange()"> อังคาร</label>
               <label class="weekday-label"><input type="checkbox" name="fc-days" value="3" checked onchange="onScheduleParamsChange()"> พุธ</label>
@@ -842,53 +830,51 @@
             </div>
           </div>
 
-          <!-- Time Slot Section (เช้าถึงเย็น) -->
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
-              <label class="form-label" style="margin: 0; color: #B26A00; font-weight: 700;">⏰ เวลาเรียน (ช่วงเช้า - เย็น)</label>
-              <span style="font-size: 0.72rem; color: #8D6E63;">แตะเลือกช่วงเวลาด่วน:</span>
+          <!-- Start Time Dropdown & Auto End Time Display -->
+          <div class="form-row" style="margin-bottom: 8px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="color: #B26A00; font-weight: 700;">🕒 เวลาเริ่มเรียน (Start Time)</label>
+              <select id="fc-start-time-select" class="form-input" style="font-weight: 700; color: #5D4037; background: white;" onchange="onStartTimeSelectChange()">
+                <option value="08:00">08:00 น. (เช้า)</option>
+                <option value="08:30">08:30 น. (เช้า)</option>
+                <option value="09:00">09:00 น. (เช้า)</option>
+                <option value="09:30">09:30 น. (เช้า)</option>
+                <option value="10:00">10:00 น. (เช้า)</option>
+                <option value="10:30">10:30 น. (เช้า)</option>
+                <option value="11:00">11:00 น. (เช้า)</option>
+                <option value="11:30">11:30 น. (เช้า)</option>
+                <option value="12:00">12:00 น. (เที่ยง)</option>
+                <option value="12:30">12:30 น. (เที่ยง)</option>
+                <option value="13:00">13:00 น. (บ่าย)</option>
+                <option value="13:30" selected>13:30 น. (บ่าย)</option>
+                <option value="14:00">14:00 น. (บ่าย)</option>
+                <option value="14:30">14:30 น. (บ่าย)</option>
+                <option value="15:00">15:00 น. (บ่าย)</option>
+                <option value="15:30">15:30 น. (บ่าย)</option>
+                <option value="16:00">16:00 น. (เย็น)</option>
+                <option value="16:30">16:30 น. (เย็น)</option>
+                <option value="17:00">17:00 น. (เย็น)</option>
+                <option value="17:30">17:30 น. (เย็น)</option>
+                <option value="18:00">18:00 น. (เย็น)</option>
+                <option value="custom">กำหนดเวลาเริ่มเอง...</option>
+              </select>
+              <input type="time" id="fc-custom-start-time" class="form-input" value="13:30" style="display: none; margin-top: 6px; background: white;" onchange="onCustomStartTimeChange()">
             </div>
 
-            <!-- Quick Time Slot Presets (เช้า / บ่าย / เย็น) -->
-            <div style="display: flex; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; align-items: center;">
-              <span style="font-size: 0.7rem; color: #795548; font-weight: 700;">🌅 เช้า:</span>
-              <button type="button" onclick="setTimeSlotPreset('09:00', '10:30')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">09:00 - 10:30</button>
-              <button type="button" onclick="setTimeSlotPreset('09:00', '11:00')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">09:00 - 11:00</button>
-              <button type="button" onclick="setTimeSlotPreset('10:00', '11:30')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">10:00 - 11:30</button>
-              <button type="button" onclick="setTimeSlotPreset('10:30', '12:00')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">10:30 - 12:00</button>
-            </div>
-
-            <div style="display: flex; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; align-items: center;">
-              <span style="font-size: 0.7rem; color: #795548; font-weight: 700;">☀️ บ่าย:</span>
-              <button type="button" onclick="setTimeSlotPreset('13:00', '14:30')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">13:00 - 14:30</button>
-              <button type="button" onclick="setTimeSlotPreset('13:30', '15:00')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">13:30 - 15:00</button>
-              <button type="button" onclick="setTimeSlotPreset('13:30', '15:30')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">13:30 - 15:30</button>
-              <button type="button" onclick="setTimeSlotPreset('14:00', '15:30')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">14:00 - 15:30</button>
-              <button type="button" onclick="setTimeSlotPreset('14:00', '16:00')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">14:00 - 16:00</button>
-              <button type="button" onclick="setTimeSlotPreset('15:30', '17:00')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">15:30 - 17:00</button>
-            </div>
-
-            <div style="display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
-              <span style="font-size: 0.7rem; color: #795548; font-weight: 700;">🌇 เย็น:</span>
-              <button type="button" onclick="setTimeSlotPreset('16:00', '17:30')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">16:00 - 17:30</button>
-              <button type="button" onclick="setTimeSlotPreset('17:00', '18:30')" class="btn-action" style="padding: 2px 7px; font-size: 0.72rem; background: white; border: 1px solid #FFE082;">17:00 - 18:30</button>
-            </div>
-
-            <!-- Time Picker Inputs & Schedule Text Output -->
-            <div class="form-row">
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 0.8rem; color: #5D4037; font-weight: 700;">เวลาเริ่ม ➡️ เวลาเลิก (Auto)</label>
-                <div style="display: flex; gap: 6px; align-items: center;">
-                  <input type="time" id="fc-start-time" class="form-input" value="13:30" style="padding: 6px 8px; font-size: 0.85rem; background: white;" onchange="onStartTimeChange()">
-                  <span style="color: #8D6E63; font-weight: 700;">-</span>
-                  <input type="time" id="fc-end-time" class="form-input" value="15:00" style="padding: 6px 8px; font-size: 0.85rem; background: white;" onchange="onScheduleParamsChange()">
-                </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="color: #B26A00; font-weight: 700;">🏁 เวลาเลิกเรียน (คำนวณ Auto)</label>
+              <div style="display: flex; align-items: center; height: 42px; background: #FFF8E1; border: 1.5px solid #FFD54F; border-radius: 10px; padding: 0 14px; gap: 8px;">
+                <span style="font-size: 1.15rem; font-weight: 800; color: #E65100;" id="fc-end-time-display">15:00 น.</span>
+                <span style="font-size: 0.75rem; color: #8D6E63; font-weight: 600;" id="fc-duration-hint">(1.30 ชม.)</span>
               </div>
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 0.8rem; color: #5D4037; font-weight: 700;">ข้อความตารางเรียน (Schedule Text)</label>
-                <input type="text" id="fc-schedule-text" class="form-input" value="Wed at 13.30 PM. - 15.00 PM." style="padding: 6px 10px; font-size: 0.85rem; background: white;" placeholder="เช่น Wed at 13.30 PM. - 15.30 PM.">
-              </div>
+              <input type="hidden" id="fc-end-time" value="15:00">
             </div>
+          </div>
+
+          <!-- Schedule Text Field -->
+          <div class="form-group" style="margin-top: 8px; margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.8rem; color: #5D4037; font-weight: 700;">ข้อความตารางเรียน (Schedule Text)</label>
+            <input type="text" id="fc-schedule-text" class="form-input" value="Wed at 13.30 PM. - 15.00 PM." style="padding: 6px 10px; font-size: 0.85rem; background: white;" placeholder="เช่น Wed at 13.30 PM. - 15.30 PM.">
           </div>
         </div>
 
@@ -1458,7 +1444,7 @@
         customInput.style.display = 'none';
       }
       recalcSessions();
-      onStartTimeChange();
+      recalcEndTimeAndSchedule();
     }
 
     function recalcSessions() {
@@ -1492,31 +1478,44 @@
       }
     }
 
-    /* 📅 SMART DAYS & TIME SLOTS CONTROLS */
-    function setWeekdayPreset(daysArray) {
-      const checkboxes = document.querySelectorAll('input[name="fc-days"]');
-      checkboxes.forEach(cb => {
-        cb.checked = daysArray.includes(parseInt(cb.value));
-      });
-      onScheduleParamsChange();
+    /* 📅 START TIME SELECTOR & AUTO END-TIME CALCULATION */
+    function onStartTimeSelectChange() {
+      const sel = document.getElementById('fc-start-time-select');
+      const customInput = document.getElementById('fc-custom-start-time');
+      if (sel.value === 'custom') {
+        customInput.style.display = 'block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+      }
+      recalcEndTimeAndSchedule();
     }
 
-    function setTimeSlotPreset(start, end) {
-      document.getElementById('fc-start-time').value = start;
-      document.getElementById('fc-end-time').value = end;
-      onScheduleParamsChange();
+    function onCustomStartTimeChange() {
+      recalcEndTimeAndSchedule();
     }
 
-    function onStartTimeChange() {
-      const startTime = document.getElementById('fc-start-time').value;
+    function getSelectedStartTime() {
+      const sel = document.getElementById('fc-start-time-select');
+      if (sel && sel.value === 'custom') {
+        return document.getElementById('fc-custom-start-time').value || '13:30';
+      }
+      return (sel && sel.value) ? sel.value : '13:30';
+    }
+
+    function recalcEndTimeAndSchedule() {
+      const startTime = getSelectedStartTime();
       if (!startTime) return;
 
       const sel = document.getElementById('fc-hours-per-session');
       let hoursPerSess = 1.5;
+      let hintText = '1.30 ชม.';
       if (sel.value === 'custom') {
         hoursPerSess = parseFloat(document.getElementById('fc-custom-hours-input').value) || 1;
+        hintText = `${hoursPerSess} ชม.`;
       } else {
         hoursPerSess = parseFloat(sel.value) || 1.5;
+        hintText = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : `${hoursPerSess} ชม.`;
       }
 
       const parts = startTime.split(':');
@@ -1525,7 +1524,16 @@
 
       const endH = String(Math.floor(endMinutes / 60)).padStart(2, '0');
       const endM = String(endMinutes % 60).padStart(2, '0');
-      document.getElementById('fc-end-time').value = `${endH}:${endM}`;
+      const endTimeStr = `${endH}:${endM}`;
+
+      const endDisplay = document.getElementById('fc-end-time-display');
+      if (endDisplay) endDisplay.innerText = `${endTimeStr} น.`;
+
+      const hintEl = document.getElementById('fc-duration-hint');
+      if (hintEl) hintEl.innerText = `(${hintText})`;
+
+      const hiddenEndInput = document.getElementById('fc-end-time');
+      if (hiddenEndInput) hiddenEndInput.value = endTimeStr;
 
       onScheduleParamsChange();
     }
@@ -1538,8 +1546,8 @@
         .filter(Boolean);
 
       const daysText = checkedDays.length > 0 ? checkedDays.join(', ') : 'Wed';
-      const startT = document.getElementById('fc-start-time').value || '13:30';
-      const endT = document.getElementById('fc-end-time').value || '15:00';
+      const startT = getSelectedStartTime();
+      const endT = (document.getElementById('fc-end-time') && document.getElementById('fc-end-time').value) || '15:00';
 
       const formatTimeAmPm = (tStr) => {
         const [h, m] = tStr.split(':').map(Number);
@@ -1563,8 +1571,8 @@
       document.getElementById('fc-total-hours').value = 30;
       document.getElementById('fc-hours-per-session').value = '1.5';
       document.getElementById('fc-custom-hours-input').style.display = 'none';
-      document.getElementById('fc-start-time').value = '13:30';
-      document.getElementById('fc-end-time').value = '15:00';
+      document.getElementById('fc-start-time-select').value = '13:30';
+      document.getElementById('fc-custom-start-time').style.display = 'none';
       document.getElementById('fc-has-entry-test').checked = true;
       document.getElementById('fc-entry-test-sess').value = 1;
       document.getElementById('fc-entry-test-url').value = '';
@@ -1572,9 +1580,15 @@
       document.getElementById('fc-final-test-sess').value = 20;
       document.getElementById('fc-final-test-url').value = '';
       document.getElementById('fc-has-final-report').checked = true;
-      setWeekdayPreset([3]); // Wednesday by default
+
+      // Default: check Wednesday only
+      const checkboxes = document.querySelectorAll('input[name="fc-days"]');
+      checkboxes.forEach(cb => {
+        cb.checked = (cb.value === '3');
+      });
+
       recalcSessions();
-      onScheduleParamsChange();
+      recalcEndTimeAndSchedule();
       openModal('new-class-modal');
     }
 
