@@ -1469,23 +1469,40 @@
         `;
       }
 
-      // Render Active Exam Banners if present for today's session
+      // Render Active Exam Banners (Only show clickable link if student has checked in!)
       if (data.activeExams && data.activeExams.length > 0) {
+        const isStudentCheckedIn = savedStudent && savedStudent.isChecked;
+
         data.activeExams.forEach(exam => {
-          const examBanner = `
-            <div style="background: linear-gradient(135deg, #FFF8E1, #FFECB3); border: 2px solid #FFA000; border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(255, 160, 0, 0.15); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-              <div style="display:flex; align-items:center; gap:12px;">
-                <div style="font-size: 2rem;">📝</div>
+          let examBanner = '';
+          if (isStudentCheckedIn) {
+            // UNLOCKED: Student has checked in -> Show clickable exam container!
+            examBanner = `
+              <div style="background: linear-gradient(135deg, #E8F5E9, #C8E6C9); border: 2px solid #4CAF50; border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(76, 175, 80, 0.15); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="font-size: 2rem;">📝</div>
+                  <div>
+                    <div style="font-weight: 800; font-size: 1.05rem; color: #1B5E20;">${exam.title} (ปลดล็อกแล้ว)</div>
+                    <div style="font-size: 0.84rem; color: #2E7D32; margin-top: 2px;">คุณเช็คชื่อเรียบร้อยแล้ว กรุณาแตะทำแบบทดสอบประจำครั้งที่ ${exam.sessionNo}</div>
+                  </div>
+                </div>
+                <a href="${exam.url}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background: #2E7D32; color: white; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 0.92rem; text-decoration: none; box-shadow: 0 3px 10px rgba(46,125,50,0.3); white-space: nowrap; flex-shrink: 0;">
+                  ทำข้อสอบ 🔗
+                </a>
+              </div>
+            `;
+          } else {
+            // LOCKED: Student hasn't checked in yet -> Require check-in first!
+            examBanner = `
+              <div style="background: #FFF8E1; border: 1.5px dashed #FFA000; border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #BF360C;">
+                <span style="font-size: 1.5rem; flex-shrink: 0;">🔒</span>
                 <div>
-                  <div style="font-weight: 800; font-size: 1.05rem; color: #E65100;">${exam.title}</div>
-                  <div style="font-size: 0.84rem; color: #5D4037; margin-top: 2px;">ประจำรอบเรียน <b>ครั้งที่ ${exam.sessionNo}</b> (กรุณาแตะเพื่อทำแบบทดสอบ)</div>
+                  <b style="color:#E65100;">มีแบบทดสอบ: ${exam.title} ประจำครั้งที่ ${exam.sessionNo}</b><br>
+                  กรุณาแตะเลือกชื่อของคุณเพื่อ <b>"เช็คชื่อเข้าเรียน"</b> ให้เรียบร้อยก่อน ระบบจึงจะเปิดปุ่มทำแบบทดสอบให้ครับ
                 </div>
               </div>
-              <a href="${exam.url}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background: #E65100; color: white; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 0.92rem; text-decoration: none; box-shadow: 0 3px 10px rgba(230,81,0,0.3); white-space: nowrap; flex-shrink: 0;">
-                ทำข้อสอบ 🔗
-              </a>
-            </div>
-          `;
+            `;
+          }
           noticeBox.insertAdjacentHTML('afterbegin', examBanner);
         });
       }
