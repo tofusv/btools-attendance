@@ -754,18 +754,30 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">หลักสูตร (Course Title) *</label>
-          <input type="text" id="fc-course" class="form-input" placeholder="เช่น Professional English Communication" required>
+        <!-- Row 2: Course Title & Client Logo -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">📚 หลักสูตร (Course Title) *</label>
+            <input type="text" id="fc-course" class="form-input" placeholder="เช่น English for Wellness (Spa, Fitness)" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">🖼️ โลโก้ลูกค้า (Client Logo URL)</label>
+            <input type="text" id="fc-client-logo" class="form-input" placeholder="เช่น https://... หรือ iili.io/...">
+          </div>
         </div>
 
+        <!-- Row 3: Instructor, Location & Learning Format -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">👨‍🏫 ครูผู้สอน (Instructor)</label>
             <input type="text" id="fc-instructor" class="form-input" placeholder="เช่น Teacher Sarah / ครูต้น">
           </div>
           <div class="form-group">
-            <label class="form-label">📍 รูปแบบการเรียน (Format)</label>
+            <label class="form-label">📍 สถานที่เรียน / ลิงก์ (Location)</label>
+            <input type="text" id="fc-location" class="form-input" placeholder="เช่น ห้องประชุม A ชั้น 3 / Zoom">
+          </div>
+          <div class="form-group">
+            <label class="form-label">🌐 รูปแบบการเรียน (Format)</label>
             <select id="fc-learning-format" class="form-input">
               <option value="On-site">🏫 On-site</option>
               <option value="Online">💻 Online</option>
@@ -1735,6 +1747,8 @@
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('fc-start-date').value = today;
       document.getElementById('fc-instructor').value = '';
+      document.getElementById('fc-location').value = '';
+      document.getElementById('fc-client-logo').value = '';
       document.getElementById('fc-learning-format').value = 'On-site';
       document.getElementById('fc-company').value = '';
       document.getElementById('fc-class-name').value = '';
@@ -1769,12 +1783,14 @@
       const className = document.getElementById('fc-class-name').value.trim();
       const company = document.getElementById('fc-company').value.trim();
       const course = document.getElementById('fc-course').value.trim();
+      const clientLogoUrl = document.getElementById('fc-client-logo').value.trim();
       const duration = document.getElementById('fc-duration').value.trim();
       const scheduleText = document.getElementById('fc-schedule-text').value.trim();
       const startDate = document.getElementById('fc-start-date').value;
       const totalSessions = document.getElementById('fc-sessions-count').value;
 
       const instructor = document.getElementById('fc-instructor').value.trim();
+      const location = document.getElementById('fc-location').value.trim();
       const learningFormat = document.getElementById('fc-learning-format').value;
 
       const hasEntryTest = document.getElementById('fc-has-entry-test').checked;
@@ -1816,8 +1832,10 @@
           className: className,
           company: company,
           course: course,
+          clientLogoUrl: clientLogoUrl,
           classDuration: duration,
           scheduleText: scheduleText,
+          location: location,
           startDate: startDate,
           daysOfWeek: checkedDays,
           totalSessions: totalSessions,
@@ -2056,7 +2074,7 @@ ${rankText}
       const sessions = c.sessions || [];
       const maxRows = Math.max(students.length, sessions.length, 15);
 
-      // Student rows HTML
+      // Student rows HTML (Strict Single-Line with dynamic font auto-scaling)
       let studentRowsHtml = '';
       for (let i = 0; i < maxRows; i++) {
         const st = students[i];
@@ -2065,17 +2083,20 @@ ${rankText}
         const nick = st ? (st.nickname || '') : '';
         const dept = st ? (st.dept || '') : '';
 
+        const nameFont = name.length > 25 ? '9.5px' : (name.length > 18 ? '10.5px' : '11.5px');
+        const deptFont = dept.length > 22 ? '9px' : (dept.length > 16 ? '10px' : '11px');
+
         studentRowsHtml += `
           <tr>
-            <td style="text-align:center; width:35px;">${no}</td>
-            <td style="width:190px;">${name}</td>
-            <td style="text-align:center; width:75px;">${nick}</td>
-            <td style="width:110px;">${dept}</td>
+            <td style="text-align:center; width:28px; font-size:11px; padding:2px 4px;">${no}</td>
+            <td style="font-size:${nameFont}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:2px 5px;" title="${escapeHtml(name)}">${name}</td>
+            <td style="text-align:center; width:55px; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:2px 4px;">${nick}</td>
+            <td style="font-size:${deptFont}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:2px 5px;" title="${escapeHtml(dept)}">${dept}</td>
           </tr>
         `;
       }
 
-      // Schedule rows HTML
+      // Schedule rows HTML (Strict Single-Line)
       let scheduleRowsHtml = '';
       for (let i = 0; i < maxRows; i++) {
         const sess = sessions[i];
@@ -2088,9 +2109,9 @@ ${rankText}
 
         scheduleRowsHtml += `
           <tr style="${rowStyle}">
-            <td style="text-align:center; width:35px;">${no}</td>
-            <td style="text-align:center; width:85px;">${dateStr}</td>
-            <td style="width:130px;">${remark}</td>
+            <td style="text-align:center; width:28px; font-size:11px; padding:2px 4px;">${no}</td>
+            <td style="text-align:center; width:80px; font-size:11px; white-space:nowrap; padding:2px 4px;">${dateStr}</td>
+            <td style="font-size:10.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:2px 5px;" title="${escapeHtml(remark)}">${remark}</td>
           </tr>
         `;
       }
@@ -2098,7 +2119,7 @@ ${rankText}
       // QR Code URL
       const currentOrigin = window.location.origin + window.location.pathname.replace('admin.html', '').replace(/\/$/, '');
       const fullUrl = `${currentOrigin}/index.html?class=${encodeURIComponent(className)}`;
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(fullUrl)}`;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(fullUrl)}`;
 
       const printWin = window.open('', '_blank', 'width=900,height=1100');
       printWin.document.write(`
@@ -2112,7 +2133,7 @@ ${rankText}
           <style>
             @page {
               size: A4 portrait;
-              margin: 12mm 15mm;
+              margin: 10mm 12mm 10mm 12mm;
             }
             * {
               box-sizing: border-box;
@@ -2123,79 +2144,47 @@ ${rankText}
             body {
               background: white;
               color: #202124;
-              padding: 10px 15px;
-              font-size: 13px;
-              line-height: 1.4;
-            }
-            .header-logo {
-              height: 36px;
-              width: auto;
-              margin-bottom: 12px;
-              display: block;
+              padding: 6px 10px;
+              font-size: 12px;
+              line-height: 1.35;
             }
             .meta-list {
-              margin-bottom: 14px;
-              font-size: 13px;
-              line-height: 1.6;
+              font-size: 12.5px;
+              line-height: 1.5;
             }
             .meta-item b {
               display: inline-block;
-              min-width: 85px;
+              min-width: 80px;
               color: #000;
             }
             .tables-flex {
               display: flex;
-              gap: 16px;
+              gap: 14px;
               align-items: flex-start;
-              margin-bottom: 24px;
+              margin-bottom: 12px;
             }
             .table-wrap {
               flex: 1;
             }
             table {
               width: 100%;
+              table-layout: fixed;
               border-collapse: collapse;
-              font-size: 12px;
             }
             th {
               background-color: #E65100;
               color: white;
               font-weight: 700;
-              padding: 6px 8px;
+              padding: 5px 6px;
               text-align: center;
+              font-size: 11.5px;
               border: 1px solid #BF360C;
             }
             td {
-              padding: 5px 8px;
               border: 1px solid #BDBDBD;
-              height: 23px;
+              height: 20px;
               vertical-align: middle;
-            }
-            .qr-section {
-              margin-top: 10px;
-              display: flex;
-              align-items: flex-start;
-              gap: 18px;
-            }
-            .qr-card {
-              border: 1.5px solid #E0E0E0;
-              padding: 8px;
-              border-radius: 12px;
-              display: inline-block;
-              text-align: center;
-              background: #FAFAFA;
-            }
-            .qr-card img {
-              width: 140px;
-              height: 140px;
-              display: block;
-              margin: 0 auto;
-            }
-            .qr-desc {
-              font-size: 12px;
-              color: #555;
-              margin-top: 6px;
-              font-weight: 600;
+              line-height: 1.15;
             }
             @media print {
               body { padding: 0; }
@@ -2204,27 +2193,49 @@ ${rankText}
           </style>
         </head>
         <body onload="window.print();">
-          <img src="https://iili.io/CLrwrGa.png" class="header-logo" alt="B Tools Training">
-          
-          <div class="meta-list">
-            <div class="meta-item"><b>Company:</b> ${c.company || 'B Tools Training'}</div>
-            <div class="meta-item"><b>Course:</b> ${c.course}</div>
-            <div class="meta-item"><b>Class:</b> ${c.classDuration || '-'}</div>
-            <div class="meta-item"><b>Schedule:</b> ${c.schedule || '-'}</div>
-            <div class="meta-item"><b>Location:</b> ${c.location || '-'}</div>
-            <div class="meta-item"><b>Start date:</b> ${c.startDate || '-'}</div>
+          <!-- Top Header: Dual Logo + Metadata on Left, QR Code on Right -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 16px;">
+            <!-- Left Header -->
+            <div style="flex: 1;">
+              <!-- Dual Logos: B Tools Training + Client Logo -->
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                <img src="https://iili.io/CLrwrGa.png" style="height: 38px; width: auto; display: block;" alt="B Tools Training">
+                ${c.clientLogoUrl ? `
+                  <span style="color: #CFD8DC; font-size: 1.6rem; font-weight: 300; line-height: 1;">|</span>
+                  <img src="${c.clientLogoUrl}" style="height: 36px; max-width: 160px; object-fit: contain; display: block;" alt="${escapeHtml(c.company || 'Client')} Logo">
+                ` : ''}
+              </div>
+
+              <!-- Metadata List -->
+              <div class="meta-list">
+                <div class="meta-item"><b>Company:</b> ${c.company || '-'}</div>
+                <div class="meta-item"><b>Course:</b> ${c.course}</div>
+                <div class="meta-item"><b>Class:</b> ${c.classDuration || '-'}</div>
+                <div class="meta-item"><b>Schedule:</b> ${c.schedule || '-'}</div>
+                <div class="meta-item"><b>Location:</b> ${c.location || '-'}</div>
+                <div class="meta-item"><b>Start date:</b> ${c.startDate || '-'}</div>
+              </div>
+            </div>
+
+            <!-- Top Right QR Code Box -->
+            <div style="flex-shrink: 0; text-align: center; border: 1.5px solid #E0E0E0; background: #FAFAFA; border-radius: 12px; padding: 8px 10px; width: 140px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+              <img src="${qrApiUrl}" style="width: 120px; height: 120px; display: block; margin: 0 auto;" alt="QR Code">
+              <div style="font-size: 11px; font-weight: 700; color: #E65100; margin-top: 4px;">📱 สแกนเช็คชื่อ</div>
+              <div style="font-size: 9.5px; color: #757575;">(Scan for Check-in)</div>
+            </div>
           </div>
 
+          <!-- Tables Section -->
           <div class="tables-flex">
             <!-- Left Table: Students -->
-            <div class="table-wrap">
+            <div class="table-wrap" style="flex: 1.15;">
               <table>
                 <thead>
                   <tr>
-                    <th style="width:35px;">No.</th>
-                    <th>Name</th>
-                    <th style="width:75px;">Nickname</th>
-                    <th style="width:110px;">Department</th>
+                    <th style="width:28px;">No.</th>
+                    <th style="width:190px;">Name</th>
+                    <th style="width:55px;">Nickname</th>
+                    <th style="width:125px;">Department</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2238,8 +2249,8 @@ ${rankText}
               <table>
                 <thead>
                   <tr>
-                    <th style="width:35px;">No.</th>
-                    <th style="width:85px;">Date</th>
+                    <th style="width:28px;">No.</th>
+                    <th style="width:80px;">Date</th>
                     <th>Remark</th>
                   </tr>
                 </thead>
@@ -2250,17 +2261,10 @@ ${rankText}
             </div>
           </div>
 
-          <div class="qr-section">
-            <div class="qr-card">
-              <img src="${qrApiUrl}" alt="QR Code">
-              <div class="qr-desc">📱 สแกนเช็คชื่อคลาสนี้</div>
-            </div>
-            <div style="font-size:12px; color:#666; line-height:1.6; padding-top:10px;">
-              <div style="font-weight:700; color:#E65100; font-size:13px; margin-bottom:4px;">💡 คำแนะนำสำหรับผู้สอน / HR:</div>
-              <div>• สามารถนำเอกสารใบนี้ไปวางประจำห้องเรียน หรือส่งไฟล์ PDF ให้ผู้เรียน</div>
-              <div>• ผู้เรียนสามารถเปิดกล้องมือถือสแกน QR Code ด้านซ้ายเพื่อเช็คชื่อเข้าเรียนได้ทันที</div>
-              <div>• สถิติการเช็คชื่อทั้งหมดจะบันทึกเข้าสู่ระบบแบบเรียลไทม์อัตโนมัติ</div>
-            </div>
+          <!-- Bottom Instructions Footer -->
+          <div style="margin-top: 10px; font-size: 11px; color: #616161; border-top: 1px dashed #E0E0E0; padding-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+            <div>💡 <b>คำแนะนำ:</b> ผู้เรียนสามารถเปิดกล้องมือถือสแกน QR Code ด้านบนขวา เพื่อเช็คชื่อเข้าเรียนแบบเรียลไทม์ได้ทันที</div>
+            <div style="font-weight: 700; color: #E65100; font-size: 10.5px;">B Tools Training</div>
           </div>
         </body>
         </html>
