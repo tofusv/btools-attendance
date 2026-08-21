@@ -748,6 +748,21 @@
 
         <div class="form-row">
           <div class="form-group">
+            <label class="form-label">👨‍🏫 ครูผู้สอน (Instructor)</label>
+            <input type="text" id="fc-instructor" class="form-input" placeholder="เช่น Teacher Sarah / ครูต้น">
+          </div>
+          <div class="form-group">
+            <label class="form-label">📍 รูปแบบการเรียน (Format)</label>
+            <select id="fc-learning-format" class="form-input">
+              <option value="On-site">🏫 On-site</option>
+              <option value="Online">💻 Online</option>
+              <option value="Hybrid (On-site & Online)">🔄 Hybrid (On-site & Online)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
             <label class="form-label">วันที่เริ่มเรียน (Start Date) *</label>
             <input type="date" id="fc-start-date" class="form-input" required>
           </div>
@@ -833,24 +848,19 @@
   <div id="roster-modal" class="modal-backdrop">
     <div class="modal-box" style="max-width: 680px;">
       <div class="modal-header">
-        <div class="modal-title">👥 จัดการรายชื่อนักเรียน (<span id="roster-class-name">-</span>)</div>
+        <div class="modal-title">👥 จัดการรายชื่อนักเรียน - <span id="roster-class-name" style="color:var(--primary);">-</span></div>
         <button class="modal-close-btn" onclick="closeModal('roster-modal')">&times;</button>
       </div>
       
-      <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 0.88rem; color: var(--text-muted);">สามารถเพิ่ม แก้ไข หรือลบรายชื่อนักเรียนได้โดยตรง</span>
-        <button class="btn-action primary" style="padding: 6px 12px; font-size: 0.82rem;" onclick="addNewRosterRow()">➕ เพิ่มแถวนักเรียน</button>
-      </div>
-
-      <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px;">
+      <div style="max-height: 380px; overflow-y: auto;">
         <table class="student-table">
           <thead>
             <tr>
-              <th style="width: 45px; text-align: center;">No.</th>
-              <th>ชื่อ-นามสกุล (Name) *</th>
-              <th style="width: 110px;">ชื่อเล่น</th>
-              <th style="width: 140px;">แผนก / บริษัท</th>
-              <th style="width: 40px; text-align: center;"></th>
+              <th style="width: 45px; text-align:center;">ลำดับ</th>
+              <th>ชื่อ-นามสกุล *</th>
+              <th style="width: 100px;">ชื่อเล่น</th>
+              <th style="width: 110px;">แผนก</th>
+              <th style="width: 45px; text-align:center;">ลบ</th>
             </tr>
           </thead>
           <tbody id="roster-table-body">
@@ -859,9 +869,12 @@
         </table>
       </div>
 
-      <div style="display: flex; gap: 10px; margin-top: 18px;">
-        <button type="button" class="btn-action" style="flex: 1; justify-content: center;" onclick="closeModal('roster-modal')">ยกเลิก</button>
-        <button type="button" class="btn-action primary" style="flex: 2; justify-content: center;" onclick="saveRosterChanges()">💾 บันทึกรายชื่อลง Google Sheet</button>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+        <button class="btn-action" onclick="addNewStudentRow()">➕ เพิ่มนักเรียน</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-action" onclick="closeModal('roster-modal')">ยกเลิก</button>
+          <button class="btn-action primary" onclick="saveStudentRoster()">💾 บันทึกรายชื่อ</button>
+        </div>
       </div>
     </div>
   </div>
@@ -872,83 +885,77 @@
   </div>
 
   <script>
-    const DEFAULT_ADMIN_PIN = "0000";
     let adminData = null;
-    let currentEditingClass = null;
+    let currentEditingClass = "";
 
-    /* Universal Admin API Caller */
-    async function adminApiRequest(action, params = {}) {
-      const payload = { action: action, ...params };
-      try {
-        if (action === "getAdminDashboardData") {
-          const res = await fetch(`${GAS_API_URL}?action=getAdminDashboardData`, { method: 'GET', mode: 'cors' });
-          return await res.json();
-        }
+    window.addEventListener('DOMContentLoaded', () => {
+      initAdminAuth();
+    });
 
-        const res = await fetch(GAS_API_URL, {
-          method: 'POST',
-          mode: 'cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        });
-        return await res.json();
-      } catch (err) {
-        throw new Error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: " + err.message);
+    /* =========================================================================
+       AUTH & PIN VERIFICATION
+       ========================================================================= */
+    function initAdminAuth() {
+      const isAuth = sessionStorage.getItem('admin_authenticated');
+      if (isAuth === 'true') {
+        showAdminView();
+      } else {
+        document.getElementById('pin-view').style.display = 'block';
+        document.getElementById('admin-dashboard-view').style.display = 'none';
+        document.getElementById('admin-pin-input').focus();
       }
     }
 
-    /* Auth & Init */
-    window.onload = function() {
-      // Set today as default date in class creator
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('fc-start-date').value = today;
-
-      if (sessionStorage.getItem('bt_admin_authenticated') === 'true') {
-        showAdminDashboard();
-      } else {
-        document.getElementById('pin-view').style.display = 'block';
-        setTimeout(() => document.getElementById('admin-pin-input').focus(), 150);
-      }
-    };
-
     function handlePinKeyUp(e) {
-      if (e.key === 'Enter') verifyAdminPin();
+      if (e.key === 'Enter') {
+        verifyAdminPin();
+      }
     }
 
     function verifyAdminPin() {
-      const entered = document.getElementById('admin-pin-input').value.trim();
-      if (entered === DEFAULT_ADMIN_PIN) {
-        sessionStorage.setItem('bt_admin_authenticated', 'true');
-        document.getElementById('pin-error').style.display = 'none';
-        showAdminDashboard();
+      const pin = document.getElementById('admin-pin-input').value;
+      const err = document.getElementById('pin-error');
+      
+      if (pin === "0000") {
+        err.style.display = 'none';
+        sessionStorage.setItem('admin_authenticated', 'true');
+        showAdminView();
       } else {
-        document.getElementById('pin-error').style.display = 'block';
+        err.style.display = 'block';
         document.getElementById('admin-pin-input').value = '';
         document.getElementById('admin-pin-input').focus();
       }
     }
 
-    function showAdminDashboard() {
+    function showAdminView() {
       document.getElementById('pin-view').style.display = 'none';
       document.getElementById('admin-dashboard-view').style.display = 'block';
       loadAdminDashboardData();
     }
 
-    function showLoading(show, text = "กำลังประมวลผล...") {
-      document.getElementById('loading-text').innerText = text;
-      document.getElementById('loading').style.display = show ? 'flex' : 'none';
+    /* =========================================================================
+       API DATA FETCHING
+       ========================================================================= */
+    async function adminApiRequest(action, payload = {}) {
+      const body = { action: action, ...payload };
+      const res = await fetch(GAS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(body)
+      });
+      return await res.json();
     }
 
     async function loadAdminDashboardData() {
-      showLoading(true, "กำลังโหลดข้อมูลทุกคลาส...");
+      showLoading(true, "กำลังโหลดข้อมูลส่วนกลาง...");
       try {
         const res = await adminApiRequest("getAdminDashboardData");
         showLoading(false);
         if (res.success && res.data) {
           adminData = res.data;
-          renderAdminDashboard(res.data);
+          renderAdminDashboard(adminData);
         } else {
-          alert("เกิดข้อผิดพลาด: " + res.message);
+          throw new Error(res.message || "ไม่สามารถดึงข้อมูลได้");
         }
       } catch (err) {
         showLoading(false);
@@ -960,8 +967,22 @@
       loadAdminDashboardData();
     }
 
+    function showLoading(show, text = "กำลังประมวลผล...") {
+      document.getElementById('loading-text').innerText = text;
+      document.getElementById('loading').style.display = show ? 'flex' : 'none';
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    /* =========================================================================
+       RENDER DASHBOARD
+       ========================================================================= */
     function renderAdminDashboard(data) {
-      // KPI Overview
       document.getElementById('kpi-total-classes').innerText = data.summary.totalClasses || 0;
       document.getElementById('kpi-total-students').innerText = `${data.summary.totalStudents || 0} คน`;
       document.getElementById('kpi-overall-rate').innerText = `${data.summary.overallAttendanceRate || 0}%`;
@@ -970,18 +991,11 @@
         document.getElementById('btn-open-sheet').href = data.summary.spreadsheetUrl;
       }
 
-      // Class Cards Grid
       const container = document.getElementById('class-grid-container');
       container.innerHTML = '';
 
       if (!data.classes || data.classes.length === 0) {
-        container.innerHTML = `
-          <div style="grid-column: 1/-1; background: white; padding: 40px; border-radius: var(--radius); text-align: center; color: #9E9E9E;">
-            <div style="font-size: 2.5rem; margin-bottom: 8px;">📂</div>
-            <div style="font-size: 1.1rem; font-weight: 700;">ยังไม่มีคลาสเรียนในระบบ</div>
-            <p style="margin-top: 4px;">กดปุ่ม <b>"➕ สร้างคลาสใหม่"</b> ด้านบนเพื่อเริ่มต้นสร้างคลาสแรก</p>
-          </div>
-        `;
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#9E9E9E;">ยังไม่มีคลาสเรียน</div>`;
         return;
       }
 
@@ -994,7 +1008,6 @@
         const totalSess = c.totalSessions || 15;
         const completedSess = c.completedSessions || 0;
         const sessionProgressPercent = totalSess > 0 ? Math.min(100, Math.round((completedSess / totalSess) * 100)) : 0;
-        const currentSessText = c.currentSessionDisplay || (completedSess >= totalSess ? "จบคอร์สแล้ว" : `ครั้งที่ ${completedSess + 1}`);
         const milestones = c.milestones || {
           entryTest: { enabled: true, done: false },
           finalTest: { enabled: true, done: false },
@@ -1005,10 +1018,11 @@
           <div class="class-card-top">
             <div class="class-header-row">
               <span class="class-name-badge">${c.className}</span>
-              <span style="font-size:0.8rem; font-weight:700; color:var(--primary);">เข้าเรียน ${rate}%</span>
+              <span style="font-size:0.82rem; font-weight:700; color:var(--primary);">เข้าเรียน ${rate}%</span>
             </div>
             <h3 class="class-course-title">${c.course}</h3>
             <div class="class-meta-item">🏢 <b>${c.company || 'ลูกค้า'}</b> (${c.classDuration || '-'})</div>
+            <div class="class-meta-item">👨‍🏫 ผู้สอน: <b>${c.instructor || '-'}</b> &nbsp;|&nbsp; <span style="display:inline-block; background:#E3F2FD; color:#1565C0; font-size:0.75rem; font-weight:700; padding:1px 8px; border-radius:10px;">${c.learningFormat || 'On-site'}</span></div>
             <div class="class-meta-item">⏰ ${c.schedule || '-'}</div>
             <div class="class-meta-item">👥 ผู้เรียน: <b>${studentCount} คน</b> | ทั้งหมด <b>${totalSess} ครั้ง</b></div>
 
@@ -1023,35 +1037,18 @@
               </div>
             </div>
 
-            <!-- Mini 3-Stat KPI Chips -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; text-align: center;">
-              <div style="background: #F8F9FA; border: 1px solid #EEEEEE; border-radius: 10px; padding: 6px 2px;">
-                <div style="font-size: 0.7rem; color: #757575; font-weight: 600;">ครั้งทั้งหมด</div>
-                <div style="font-size: 0.95rem; font-weight: 800; color: #263238; margin-top: 1px;">${totalSess} <span style="font-size:0.7rem; font-weight:500;">ครั้ง</span></div>
+            <!-- Milestones / Deliverables Checklist (High-Contrast Clean Readable UI) -->
+            <div style="margin-top: 12px; background: #FAFAFA; border: 1.5px solid #E0E0E0; border-radius: 14px; padding: 10px 12px;">
+              <div style="font-size: 0.78rem; font-weight: 700; color: #37474F; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="display:flex; align-items:center; gap:4px;">📋 <span>การประเมิน & ส่งมอบ</span></span>
+                <span style="font-size: 0.68rem; color: #78909C; font-weight: 500;">(แตะเพื่อเปลี่ยนสถานะ)</span>
               </div>
-              <div style="background: #E8F5E9; border: 1px solid #C8E6C9; border-radius: 10px; padding: 6px 2px;">
-                <div style="font-size: 0.7rem; color: #2E7D32; font-weight: 600;">ผ่านไปแล้ว</div>
-                <div style="font-size: 0.95rem; font-weight: 800; color: #2E7D32; margin-top: 1px;">${completedSess} <span style="font-size:0.7rem; font-weight:500;">ครั้ง</span></div>
-              </div>
-              <div style="background: #FFF3E0; border: 1px solid #FFE0B2; border-radius: 10px; padding: 6px 2px;">
-                <div style="font-size: 0.7rem; color: #E65100; font-weight: 600;">รอบปัจจุบัน</div>
-                <div style="font-size: 0.95rem; font-weight: 800; color: #E65100; margin-top: 1px;">${currentSessText}</div>
-              </div>
-            </div>
-
-            <!-- Milestones / Deliverables Checklist -->
-            <div style="margin-top: 10px; background: #FAFAFA; border: 1px solid #EEEEEE; border-radius: 12px; padding: 8px 10px;">
-              <div style="font-size: 0.75rem; font-weight: 700; color: #616161; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <span>📋 การประเมิน & ส่งมอบ (Milestones)</span>
-                <span style="font-size: 0.68rem; color: #9E9E9E;">แตะเพื่อเปลี่ยนสถานะ</span>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 5px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
                 ${renderMilestoneChip(c.className, 'entryTest', '📝 Entry Test', milestones.entryTest)}
                 ${renderMilestoneChip(c.className, 'finalTest', '🎓 Final Test', milestones.finalTest)}
                 ${renderMilestoneChip(c.className, 'finalReport', '📊 Final Report', milestones.finalReport)}
               </div>
             </div>
-
           </div>
 
           <div class="class-actions-grid">
@@ -1072,7 +1069,6 @@
             </button>
           </div>
         `;
-
         container.appendChild(card);
       });
     }
@@ -1080,25 +1076,25 @@
     function renderMilestoneChip(className, key, label, item) {
       if (!item || !item.enabled) {
         return `
-          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; padding:4px 8px; border-radius:6px; background:#F5F5F5; color:#9E9E9E;">
-            <span>${label}</span>
-            <span style="font-size:0.7rem; color:#9E9E9E;">(ไม่มีในคลาสนี้)</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding:6px 10px; border-radius:8px; background:#ECEFF1; border:1px dashed #B0BEC5; color:#78909C;">
+            <span style="font-weight:500;">${label}</span>
+            <span style="font-size:0.7rem; font-weight:600; background:#CFD8DC; color:#546E7A; padding:2px 8px; border-radius:6px;">- ไม่มีในคลาสนี้ -</span>
           </div>
         `;
       }
 
       if (item.done) {
         return `
-          <div onclick="toggleMilestone('${className}', '${key}')" style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; padding:5px 8px; border-radius:8px; background:#E8F5E9; border:1px solid #C8E6C9; color:#2E7D32; cursor:pointer; user-select:none;" title="แตะเพื่อเปลี่ยนสถานะ">
-            <span style="font-weight:600;">${label}</span>
-            <span style="font-size:0.72rem; font-weight:700; background:#2E7D32; color:white; padding:1px 6px; border-radius:4px;">✔ ทำเรียบร้อย</span>
+          <div onclick="toggleMilestone('${className}', '${key}')" style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; padding:6px 10px; border-radius:8px; background:#E8F5E9; border:1.5px solid #81C784; color:#1B5E20; cursor:pointer; user-select:none; transition:all 0.2s;" title="แตะเพื่อเปลี่ยนสถานะ">
+            <span style="font-weight:700;">${label}</span>
+            <span style="font-size:0.75rem; font-weight:700; background:#2E7D32; color:#FFFFFF; padding:2px 8px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">✔ ทำเรียบร้อยแล้ว</span>
           </div>
         `;
       } else {
         return `
-          <div onclick="toggleMilestone('${className}', '${key}')" style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; padding:5px 8px; border-radius:8px; background:#FFF8E1; border:1px solid #FFE082; color:#E65100; cursor:pointer; user-select:none;" title="แตะเพื่อเปลี่ยนสถานะ">
-            <span style="font-weight:600;">${label}</span>
-            <span style="font-size:0.72rem; font-weight:700; background:#FFE082; color:#E65100; padding:1px 6px; border-radius:4px;">⏳ รอทำ (แตะเมื่อเสร็จ)</span>
+          <div onclick="toggleMilestone('${className}', '${key}')" style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; padding:6px 10px; border-radius:8px; background:#FFF3E0; border:1.5px solid #FFB74D; color:#BF360C; cursor:pointer; user-select:none; transition:all 0.2s;" title="แตะเพื่อเปลี่ยนสถานะ">
+            <span style="font-weight:700;">${label}</span>
+            <span style="font-size:0.75rem; font-weight:700; background:#FFE082; color:#BF360C; padding:2px 8px; border-radius:6px; border:1px solid #FFD54F;">⏳ ยังไม่ทำ (แตะเมื่อเสร็จ)</span>
           </div>
         `;
       }
