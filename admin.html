@@ -1,1 +1,1308 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin Portal - B Tools Training Attendance</title>
+
+  <!-- 
+  =============================================================================
+  ⚙️ CONFIGURATION: วางลิงก์ GOOGLE APPS SCRIPT WEB APP ที่นี่
+  =============================================================================
+  -->
+  <script>
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwNfGq26_b9i_33B9R7m3tK0r3F1q-EXAMPLE/exec"; // 👈 วาง Web App URL จริงของคุณที่นี่
+  </script>
+  <!-- ============================================================================= -->
+
+  <!-- Google Fonts: Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after, html, body, button, input, select, textarea, span, div, h1, h2, h3, p, a, label, b, strong {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #E65100;
+      --primary-light: #FFF3E0;
+      --primary-dark: #BF360C;
+      --success: #2E7D32;
+      --success-light: #E8F5E9;
+      --danger: #C62828;
+      --danger-light: #FFEBEE;
+      --text-main: #202124;
+      --text-muted: #5F6368;
+      --bg: #F4F6F8;
+      --card-bg: #FFFFFF;
+      --border-color: #E0E0E0;
+      --radius: 16px;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 16px;
+      max-width: 1080px;
+      margin: 0 auto;
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* TOP NAVBAR */
+    .admin-navbar {
+      background: white;
+      padding: 14px 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .nav-brand-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo-img {
+      height: 28px;
+      width: auto;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-badge {
+      background: #E65100;
+      color: white;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-action {
+      background: white;
+      color: var(--text-main);
+      border: 1.5px solid var(--border-color);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-action:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-action.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(230, 81, 0, 0.25);
+    }
+
+    .btn-action.primary:hover {
+      background: var(--primary-dark);
+    }
+
+    /* KPI METRICS OVERVIEW */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .kpi-card {
+      background: white;
+      padding: 18px 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-left: 5px solid var(--primary);
+    }
+
+    .kpi-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .kpi-info {
+      flex: 1;
+    }
+
+    .kpi-label {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .kpi-value {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    /* SECTION HEADER */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* CLASSES GRID */
+    .class-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .class-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1.5px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .class-card:hover {
+      border-color: #FFE0B2;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
+    }
+
+    .class-card-top {
+      margin-bottom: 14px;
+    }
+
+    .class-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .class-name-badge {
+      background: #ECEFF1;
+      color: #37474F;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .class-course-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.35;
+      margin-bottom: 6px;
+    }
+
+    .class-meta-item {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    /* Attendance Progress in Card */
+    .class-progress-box {
+      background: #FAFAFA;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin: 12px 0;
+      border: 1px solid #EEEEEE;
+    }
+
+    .class-progress-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .progress-bar-bg {
+      background: #E0E0E0;
+      height: 7px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #4CAF50, #2E7D32);
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    /* Class Card Actions */
+    .class-actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-class-action {
+      background: #F5F5F5;
+      color: var(--text-main);
+      border: none;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-class-action:hover {
+      background: #EEEEEE;
+      color: var(--primary);
+    }
+
+    .btn-class-action.highlight {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    .btn-class-action.highlight:hover {
+      background: #FFE0B2;
+    }
+
+    /* MODAL DIALOGS */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 16px;
+      backdrop-filter: blur(3px);
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 580px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: #9E9E9E;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .modal-close-btn:hover {
+      color: var(--text-main);
+    }
+
+    /* FORM STYLES */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #424242;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--primary);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(230, 81, 0, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .weekday-checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .weekday-label {
+      background: #F5F5F5;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1.5px solid transparent;
+      user-select: none;
+    }
+
+    .weekday-label:has(input:checked) {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-color: var(--primary);
+    }
+
+    /* STUDENT ROSTER TABLE */
+    .student-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.88rem;
+    }
+
+    .student-table th {
+      background: #F5F5F5;
+      padding: 10px;
+      text-align: left;
+      font-weight: 700;
+      color: #555;
+      border-bottom: 1.5px solid var(--border-color);
+    }
+
+    .student-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #EEEEEE;
+    }
+
+    .student-table input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.88rem;
+    }
+
+    .btn-remove-st {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    /* QR CODE DISPLAY MODAL */
+    .qr-modal-content {
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .qr-image-box {
+      background: white;
+      padding: 14px;
+      border-radius: 16px;
+      display: inline-block;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      margin-bottom: 14px;
+      border: 1px solid #EEEEEE;
+    }
+
+    .qr-image-box img {
+      width: 220px;
+      height: 220px;
+      display: block;
+    }
+
+    .qr-link-input-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #2E7D32;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+      z-index: 4000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* LOADING OVERLAY */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 3500;
+      backdrop-filter: blur(3px);
+    }
+
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 4px solid #FFE0B2;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* PIN ENTRY SCREEN */
+    .pin-auth-container {
+      background: white;
+      max-width: 380px;
+      margin: 80px auto;
+      padding: 32px 24px;
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .pin-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 1.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px auto;
+    }
+
+    .pin-input {
+      width: 170px;
+      height: 50px;
+      font-size: 1.8rem;
+      letter-spacing: 12px;
+      text-align: center;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      margin: 16px auto;
+      display: block;
+      outline: none;
+      background: #FAFAFA;
+    }
+
+    .pin-input:focus {
+      border-color: var(--primary);
+      background: white;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading State -->
+  <div id="loading" class="loading-overlay" style="display: none;">
+    <div class="spinner"></div>
+    <div id="loading-text" style="font-weight: 600; color: #555;">กำลังประมวลผล...</div>
+  </div>
+
+  <!-- VIEW 1: PIN AUTH SCREEN -->
+  <div id="pin-view" class="pin-auth-container" style="display: none;">
+    <div class="pin-avatar">🔐</div>
+    <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 4px;">Admin Portal</h2>
+    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">กรุณากรอกรหัส PIN 4 หลักเพื่อเข้าสู่ระบบจัดการส่วนกลาง</p>
+    
+    <input type="password" id="admin-pin-input" class="pin-input" maxlength="4" placeholder="••••" inputmode="numeric" onkeyup="handlePinKeyUp(event)">
+    <div id="pin-error" style="color: var(--danger); font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; display: none;">⚠️ รหัส PIN ไม่ถูกต้อง</div>
+    
+    <button class="btn-action primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem;" onclick="verifyAdminPin()">
+      เข้าสู่ระบบ Admin ✔
+    </button>
+  </div>
+
+  <!-- VIEW 2: MAIN ADMIN DASHBOARD -->
+  <div id="admin-dashboard-view" style="display: none;">
+    
+    <!-- Navbar -->
+    <header class="admin-navbar">
+      <div class="nav-brand-box">
+        <img src="https://iili.io/CLrwrGa.png" alt="B Tools Training" class="brand-logo-img">
+        <div class="brand-title">
+          B Tools Attendance <span class="brand-badge">ADMIN</span>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button class="btn-action primary" onclick="openNewClassModal()">
+          ➕ สร้างคลาสใหม่
+        </button>
+        <button class="btn-action" onclick="refreshAdminData()">
+          🔄 รีเฟรช
+        </button>
+        <a id="btn-open-sheet" class="btn-action" href="#" target="_blank">
+          📊 เปิด Google Sheet
+        </a>
+      </div>
+    </header>
+
+    <!-- KPI Overview Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card" style="border-left-color: #E65100;">
+        <div class="kpi-icon-box">📚</div>
+        <div class="kpi-info">
+          <div class="kpi-label">จำนวนคลาสทั้งหมด</div>
+          <div class="kpi-value" id="kpi-total-classes">0</div>
+        </div>
+      </div>
+      <div class="kpi-card" style="border-left-color: #1976D2;">
+        <div class="kpi-icon-box" style="background:#E3F2FD; color:#1976D2;">👥</div>
+        <div class="kpi-info">
+          <div class="kpi-label">จำนวนนักเรียนทั้งหมด</div>
+          <div class="kpi-value" id="kpi-total-students">0</div>
+        </div>
+      </div>
+      <div class="kpi-card" style="border-left-color: #2E7D32;">
+        <div class="kpi-icon-box" style="background:#E8F5E9; color:#2E7D32;">📈</div>
+        <div class="kpi-info">
+          <div class="kpi-label">อัตราการเข้าเรียนเฉลี่ยรวม</div>
+          <div class="kpi-value" id="kpi-overall-rate" style="color: #2E7D32;">0%</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Classes Section -->
+    <div class="section-header">
+      <div class="section-title">
+        <span>📋 รายการคลาสเรียนทั้งหมด</span>
+      </div>
+    </div>
+
+    <!-- Class Grid Container -->
+    <main id="class-grid-container" class="class-grid">
+      <!-- Populated dynamically via JS -->
+    </main>
+
+  </div>
+
+  <!-- MODAL 1: CREATE NEW CLASS -->
+  <div id="new-class-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">📅 สร้างคลาสใหม่ (Auto Schedule)</div>
+        <button class="modal-close-btn" onclick="closeModal('new-class-modal')">&times;</button>
+      </div>
+      
+      <form id="new-class-form" onsubmit="handleCreateClassSubmit(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">ชื่อคลาส (Sheet Name) *</label>
+            <input type="text" id="fc-class-name" class="form-input" placeholder="เช่น Class_2, Eng_B1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ชื่อบริษัท (Company)</label>
+            <input type="text" id="fc-company" class="form-input" placeholder="เช่น ABC Co., Ltd.">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">หลักสูตร (Course Title) *</label>
+          <input type="text" id="fc-course" class="form-input" placeholder="เช่น Professional English Communication" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">ชั่วโมงเรียน (Duration)</label>
+            <input type="text" id="fc-duration" class="form-input" placeholder="เช่น 40 Hours">
+          </div>
+          <div class="form-group">
+            <label class="form-label">เวลาเรียน (Schedule Text)</label>
+            <input type="text" id="fc-schedule-text" class="form-input" placeholder="เช่น Wed at 13.30 PM. - 15.30 PM.">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">วันที่เริ่มเรียน (Start Date) *</label>
+            <input type="date" id="fc-start-date" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">จำนวนครั้งที่เรียน (Total Sessions)</label>
+            <input type="number" id="fc-sessions-count" class="form-input" value="15" min="1" max="50" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">วันเรียนประจำสัปดาห์ (เลือกได้มากกว่า 1 วัน) *</label>
+          <div class="weekday-checkbox-group">
+            <label class="weekday-label"><input type="checkbox" name="fc-days" value="1"> จันทร์</label>
+            <label class="weekday-label"><input type="checkbox" name="fc-days" value="2"> อังคาร</label>
+            <label class="weekday-label"><input type="checkbox" name="fc-days" value="3" checked> พุธ</label>
+            <label class="weekday-label"><input type="checkbox" name="fc-days" value="4"> พฤหัสฯ</label>
+            <label class="weekday-label"><input type="checkbox" name="fc-days" value="5"> ศุกร์</label>
+            <label class="weekday-label"><input type="checkbox" name="fc-days" value="6"> เสาร์</label>
+            <label class="weekday-label"><input type="checkbox" name="fc-days" value="0"> อาทิตย์</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">รายชื่อนักเรียนเริ่มต้น (วางหลายๆ บรรทัดได้เลย)</label>
+          <textarea id="fc-students-raw" class="form-textarea" rows="4" placeholder="พิมพ์หรือวางชื่อนักเรียน เช่น:
+คุณ สมชาย ใจดี (ต้น) - IT
+คุณ วนิดา สดใส (ฝน) - HR"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-action" style="flex: 1; justify-content: center;" onclick="closeModal('new-class-modal')">ยกเลิก</button>
+          <button type="submit" class="btn-action primary" style="flex: 2; justify-content: center;">🚀 บันทึกและสร้างคลาสใน Google Sheet ทันที</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: QR CODE VIEWER & PRINT -->
+  <div id="qr-modal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title">📱 QR Code เช็คชื่อประจำคลาส</div>
+        <button class="modal-close-btn" onclick="closeModal('qr-modal')">&times;</button>
+      </div>
+      
+      <div class="qr-modal-content">
+        <div style="font-weight: 700; font-size: 1.1rem; color: var(--primary); margin-bottom: 2px;" id="qr-course-title">-</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;" id="qr-class-subtitle">-</div>
+
+        <div class="qr-image-box">
+          <img id="qr-image-tag" src="" alt="QR Code">
+        </div>
+
+        <div class="qr-link-input-box">
+          <input type="text" id="qr-url-input" class="form-input" readonly>
+          <button class="btn-action primary" onclick="copyQrUrl()">คัดลอก</button>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-action" style="flex: 1; justify-content: center;" onclick="printQrCard()">🖨️ สั่งพิมพ์ A4</button>
+          <a id="btn-download-qr" class="btn-action" style="flex: 1; justify-content: center;" download="qrcode.png" href="#" target="_blank">💾 ดาวน์โหลดรูปภาพ</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: STUDENT ROSTER MANAGER -->
+  <div id="roster-modal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 680px;">
+      <div class="modal-header">
+        <div class="modal-title">👥 จัดการรายชื่อนักเรียน (<span id="roster-class-name">-</span>)</div>
+        <button class="modal-close-btn" onclick="closeModal('roster-modal')">&times;</button>
+      </div>
+      
+      <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.88rem; color: var(--text-muted);">สามารถเพิ่ม แก้ไข หรือลบรายชื่อนักเรียนได้โดยตรง</span>
+        <button class="btn-action primary" style="padding: 6px 12px; font-size: 0.82rem;" onclick="addNewRosterRow()">➕ เพิ่มแถวนักเรียน</button>
+      </div>
+
+      <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px;">
+        <table class="student-table">
+          <thead>
+            <tr>
+              <th style="width: 45px; text-align: center;">No.</th>
+              <th>ชื่อ-นามสกุล (Name) *</th>
+              <th style="width: 110px;">ชื่อเล่น</th>
+              <th style="width: 140px;">แผนก / บริษัท</th>
+              <th style="width: 40px; text-align: center;"></th>
+            </tr>
+          </thead>
+          <tbody id="roster-table-body">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 18px;">
+        <button type="button" class="btn-action" style="flex: 1; justify-content: center;" onclick="closeModal('roster-modal')">ยกเลิก</button>
+        <button type="button" class="btn-action primary" style="flex: 2; justify-content: center;" onclick="saveRosterChanges()">💾 บันทึกรายชื่อลง Google Sheet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+    <span>✔</span> <span id="toast-msg">ข้อความ</span>
+  </div>
+
+  <script>
+    const DEFAULT_ADMIN_PIN = "0000";
+    let adminData = null;
+    let currentEditingClass = null;
+
+    /* Universal Admin API Caller */
+    async function adminApiRequest(action, params = {}) {
+      const payload = { action: action, ...params };
+      try {
+        if (action === "getAdminDashboardData") {
+          const res = await fetch(`${GAS_API_URL}?action=getAdminDashboardData`, { method: 'GET', mode: 'cors' });
+          return await res.json();
+        }
+
+        const res = await fetch(GAS_API_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+        return await res.json();
+      } catch (err) {
+        throw new Error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: " + err.message);
+      }
+    }
+
+    /* Auth & Init */
+    window.onload = function() {
+      // Set today as default date in class creator
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('fc-start-date').value = today;
+
+      if (sessionStorage.getItem('bt_admin_authenticated') === 'true') {
+        showAdminDashboard();
+      } else {
+        document.getElementById('pin-view').style.display = 'block';
+        setTimeout(() => document.getElementById('admin-pin-input').focus(), 150);
+      }
+    };
+
+    function handlePinKeyUp(e) {
+      if (e.key === 'Enter') verifyAdminPin();
+    }
+
+    function verifyAdminPin() {
+      const entered = document.getElementById('admin-pin-input').value.trim();
+      if (entered === DEFAULT_ADMIN_PIN) {
+        sessionStorage.setItem('bt_admin_authenticated', 'true');
+        document.getElementById('pin-error').style.display = 'none';
+        showAdminDashboard();
+      } else {
+        document.getElementById('pin-error').style.display = 'block';
+        document.getElementById('admin-pin-input').value = '';
+        document.getElementById('admin-pin-input').focus();
+      }
+    }
+
+    function showAdminDashboard() {
+      document.getElementById('pin-view').style.display = 'none';
+      document.getElementById('admin-dashboard-view').style.display = 'block';
+      loadAdminDashboardData();
+    }
+
+    function showLoading(show, text = "กำลังประมวลผล...") {
+      document.getElementById('loading-text').innerText = text;
+      document.getElementById('loading').style.display = show ? 'flex' : 'none';
+    }
+
+    async function loadAdminDashboardData() {
+      showLoading(true, "กำลังโหลดข้อมูลทุกคลาส...");
+      try {
+        const res = await adminApiRequest("getAdminDashboardData");
+        showLoading(false);
+        if (res.success && res.data) {
+          adminData = res.data;
+          renderAdminDashboard(res.data);
+        } else {
+          alert("เกิดข้อผิดพลาด: " + res.message);
+        }
+      } catch (err) {
+        showLoading(false);
+        alert("ไม่สามารถโหลดข้อมูลได้: " + err.message);
+      }
+    }
+
+    function refreshAdminData() {
+      loadAdminDashboardData();
+    }
+
+    function renderAdminDashboard(data) {
+      // KPI Overview
+      document.getElementById('kpi-total-classes').innerText = data.summary.totalClasses || 0;
+      document.getElementById('kpi-total-students').innerText = `${data.summary.totalStudents || 0} คน`;
+      document.getElementById('kpi-overall-rate').innerText = `${data.summary.overallAttendanceRate || 0}%`;
+
+      if (data.summary.spreadsheetUrl) {
+        document.getElementById('btn-open-sheet').href = data.summary.spreadsheetUrl;
+      }
+
+      // Class Cards Grid
+      const container = document.getElementById('class-grid-container');
+      container.innerHTML = '';
+
+      if (!data.classes || data.classes.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1/-1; background: white; padding: 40px; border-radius: var(--radius); text-align: center; color: #9E9E9E;">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">📂</div>
+            <div style="font-size: 1.1rem; font-weight: 700;">ยังไม่มีคลาสเรียนในระบบ</div>
+            <p style="margin-top: 4px;">กดปุ่ม <b>"➕ สร้างคลาสใหม่"</b> ด้านบนเพื่อเริ่มต้นสร้างคลาสแรก</p>
+          </div>
+        `;
+        return;
+      }
+
+      data.classes.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'class-card';
+
+        const studentCount = c.students ? c.students.length : 0;
+        const rate = c.attendanceRate || 0;
+
+        card.innerHTML = `
+          <div class="class-card-top">
+            <div class="class-header-row">
+              <span class="class-name-badge">${c.className}</span>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--primary);">เข้าเรียน ${rate}%</span>
+            </div>
+            <h3 class="class-course-title">${c.course}</h3>
+            <div class="class-meta-item">🏢 <b>${c.company || 'ลูกค้า'}</b> (${c.classDuration || '-'})</div>
+            <div class="class-meta-item">⏰ ${c.schedule || '-'}</div>
+            <div class="class-meta-item">👥 ผู้เรียน: <b>${studentCount} คน</b> | ทั้งหมด ${c.totalSessions || 15} ครั้ง</div>
+
+            <div class="class-progress-box">
+              <div class="class-progress-row">
+                <span>อัตราการเข้าเรียนรวม</span>
+                <span>${rate}%</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: ${rate}%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="class-actions-grid">
+            <a class="btn-class-action highlight" href="index.html?class=${encodeURIComponent(c.className)}" target="_blank">
+              📱 หน้านักเรียน
+            </a>
+            <button class="btn-class-action" onclick="openQrModal('${c.className}')">
+              🖨️ QR Code
+            </button>
+            <button class="btn-class-action" onclick="openRosterModal('${c.className}')">
+              👥 รายชื่อ (${studentCount})
+            </button>
+            <button class="btn-class-action" onclick="copyClassLineSummary('${c.className}')">
+              💬 สรุป LINE
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    /* =========================================================================
+       MODAL CONTROLS & CLASS CREATION
+       ========================================================================= */
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    function openNewClassModal() {
+      document.getElementById('new-class-form').reset();
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('fc-start-date').value = today;
+      openModal('new-class-modal');
+    }
+
+    async function handleCreateClassSubmit(e) {
+      e.preventDefault();
+
+      const className = document.getElementById('fc-class-name').value.trim();
+      const company = document.getElementById('fc-company').value.trim();
+      const course = document.getElementById('fc-course').value.trim();
+      const duration = document.getElementById('fc-duration').value.trim();
+      const scheduleText = document.getElementById('fc-schedule-text').value.trim();
+      const startDate = document.getElementById('fc-start-date').value;
+      const totalSessions = document.getElementById('fc-sessions-count').value;
+
+      const checkedDays = Array.from(document.querySelectorAll('input[name="fc-days"]:checked')).map(cb => parseInt(cb.value));
+      if (checkedDays.length === 0) {
+        alert("กรุณาเลือกวันเรียนประจำสัปดาห์อย่างน้อย 1 วัน");
+        return;
+      }
+
+      // Parse student names
+      const rawStudents = document.getElementById('fc-students-raw').value.split('\n');
+      const students = [];
+      rawStudents.forEach((line, idx) => {
+        const clean = line.trim();
+        if (clean) {
+          students.push({
+            no: idx + 1,
+            name: clean,
+            nickname: "",
+            dept: ""
+          });
+        }
+      });
+
+      closeModal('new-class-modal');
+      showLoading(true, "กำลังคำนวณวันเรียน และสร้างคลาสใน Google Sheet...");
+
+      try {
+        const res = await adminApiRequest("createClassFromAdmin", {
+          className: className,
+          company: company,
+          course: course,
+          classDuration: duration,
+          scheduleText: scheduleText,
+          startDate: startDate,
+          daysOfWeek: checkedDays,
+          totalSessions: totalSessions,
+          students: students
+        });
+
+        showLoading(false);
+        if (res.success) {
+          showToast(`สร้างคลาส "${className}" สำเร็จเรียบร้อย! 🚀`);
+          loadAdminDashboardData();
+        } else {
+          alert("เกิดข้อผิดพลาด: " + res.message);
+        }
+      } catch (err) {
+        showLoading(false);
+        alert("เกิดข้อผิดพลาด: " + err.message);
+      }
+    }
+
+    /* =========================================================================
+       QR CODE VIEWER & PRINT ENGINE
+       ========================================================================= */
+    function openQrModal(className) {
+      if (!adminData) return;
+      const c = adminData.classes.find(item => item.className === className);
+      if (!c) return;
+
+      document.getElementById('qr-course-title').innerText = c.course;
+      document.getElementById('qr-class-subtitle').innerText = `${c.company || 'ลูกค้า'} | คลาส ${c.className}`;
+
+      // Build target URL
+      const currentOrigin = window.location.origin + window.location.pathname.replace('admin.html', '').replace(/\/$/, '');
+      const fullUrl = `${currentOrigin}/index.html?class=${encodeURIComponent(className)}`;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullUrl)}`;
+
+      document.getElementById('qr-image-tag').src = qrApiUrl;
+      document.getElementById('qr-url-input').value = fullUrl;
+      document.getElementById('btn-download-qr').href = qrApiUrl;
+
+      openModal('qr-modal');
+    }
+
+    function copyQrUrl() {
+      const input = document.getElementById('qr-url-input');
+      input.select();
+      navigator.clipboard.writeText(input.value).then(() => {
+        showToast("คัดลอกลิงก์เรียบร้อยแล้ว! 📋");
+      });
+    }
+
+    function printQrCard() {
+      const qrSrc = document.getElementById('qr-image-tag').src;
+      const title = document.getElementById('qr-course-title').innerText;
+      const sub = document.getElementById('qr-class-subtitle').innerText;
+
+      const printWin = window.open('', '', 'width=700,height=800');
+      printWin.document.write(`
+        <html>
+          <head>
+            <title>QR Code - ${title}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap" rel="stylesheet">
+            <style>
+              body { font-family: 'Sarabun', sans-serif; text-align: center; padding: 40px; }
+              .box { border: 3px solid #E65100; border-radius: 24px; padding: 30px; max-width: 480px; margin: 0 auto; }
+              h1 { color: #E65100; font-size: 24px; margin-bottom: 6px; }
+              h2 { font-size: 16px; color: #555; margin-bottom: 20px; font-weight: normal; }
+              img { width: 260px; height: 260px; margin-bottom: 20px; }
+              p { font-size: 15px; color: #333; font-weight: bold; }
+            </style>
+          </head>
+          <body onload="window.print(); window.close();">
+            <div class="box">
+              <img src="https://iili.io/CLrwrGa.png" style="height: 32px; width: auto; margin-bottom: 10px;">
+              <h1>สแกนเพื่อเช็คชื่อเข้าเรียน</h1>
+              <h2>${title} (${sub})</h2>
+              <img src="${qrSrc}">
+              <p>📱 เปิดกล้องมือถือแล้วสแกน QR Code นี้เพื่อเช็คชื่อ</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWin.document.close();
+    }
+
+    /* =========================================================================
+       STUDENT ROSTER MANAGER
+       ========================================================================= */
+    function openRosterModal(className) {
+      if (!adminData) return;
+      const c = adminData.classes.find(item => item.className === className);
+      if (!c) return;
+
+      currentEditingClass = className;
+      document.getElementById('roster-class-name').innerText = className;
+
+      const tbody = document.getElementById('roster-table-body');
+      tbody.innerHTML = '';
+
+      const students = c.students || [];
+      if (students.length === 0) {
+        for (let i = 1; i <= 5; i++) {
+          addNewRosterRow("", "", "");
+        }
+      } else {
+        students.forEach((st, idx) => {
+          addNewRosterRow(st.name, st.nickname, st.dept);
+        });
+      }
+
+      openModal('roster-modal');
+    }
+
+    function addNewRosterRow(name = "", nickname = "", dept = "") {
+      const tbody = document.getElementById('roster-table-body');
+      const rowCount = tbody.rows.length + 1;
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td style="text-align:center; font-weight:700; color:#888;" class="row-no">${rowCount}</td>
+        <td><input type="text" class="st-name-input" value="${name}" placeholder="ชื่อ-นามสกุล"></td>
+        <td><input type="text" class="st-nick-input" value="${nickname}" placeholder="ชื่อเล่น"></td>
+        <td><input type="text" class="st-dept-input" value="${dept}" placeholder="แผนก"></td>
+        <td style="text-align:center;"><button class="btn-remove-st" onclick="removeRosterRow(this)">&times;</button></td>
+      `;
+
+      tbody.appendChild(tr);
+      reindexRosterRows();
+    }
+
+    function removeRosterRow(btn) {
+      const tr = btn.closest('tr');
+      tr.remove();
+      reindexRosterRows();
+    }
+
+    function reindexRosterRows() {
+      const tbody = document.getElementById('roster-table-body');
+      Array.from(tbody.rows).forEach((row, idx) => {
+        row.querySelector('.row-no').innerText = idx + 1;
+      });
+    }
+
+    async function saveRosterChanges() {
+      if (!currentEditingClass) return;
+
+      const tbody = document.getElementById('roster-table-body');
+      const students = [];
+
+      Array.from(tbody.rows).forEach((row, idx) => {
+        const name = row.querySelector('.st-name-input').value.trim();
+        const nickname = row.querySelector('.st-nick-input').value.trim();
+        const dept = row.querySelector('.st-dept-input').value.trim();
+
+        if (name) {
+          students.push({
+            no: idx + 1,
+            name: name,
+            nickname: nickname,
+            dept: dept
+          });
+        }
+      });
+
+      closeModal('roster-modal');
+      showLoading(true, "กำลังบันทึกรายชื่อลง Google Sheet...");
+
+      try {
+        const res = await adminApiRequest("updateClassStudents", {
+          className: currentEditingClass,
+          students: students
+        });
+
+        showLoading(false);
+        if (res.success) {
+          showToast("บันทึกรายชื่อนักเรียนสำเร็จ! ✔");
+          loadAdminDashboardData();
+        } else {
+          alert("เกิดข้อผิดพลาด: " + res.message);
+        }
+      } catch (err) {
+        showLoading(false);
+        alert("เกิดข้อผิดพลาด: " + err.message);
+      }
+    }
+
+    /* =========================================================================
+       LINE SUMMARY COPY
+       ========================================================================= */
+    function copyClassLineSummary(className) {
+      if (!adminData) return;
+      const c = adminData.classes.find(item => item.className === className);
+      if (!c) return;
+
+      const students = c.students || [];
+      const totalSessions = c.totalSessions || 15;
+
+      let rankText = students.map(s => {
+        const pct = Math.round(((s.totalPresent || 0) / totalSessions) * 100);
+        return `• ${s.nickname || s.name}: ${s.totalPresent || 0}/${totalSessions} ครั้ง (${pct}%)`;
+      }).join('\n');
+
+      const lineText = 
+`📊 สรุปสถิติการเข้าเรียน — B Tools Training
+🏢 บริษัท: ${c.company || '-'}
+📚 หลักสูตร: ${c.course || '-'}
+📈 อัตราการเข้าเรียนเฉลี่ยรวม: ${c.attendanceRate}%
+---------------------------------
+สรุปรายบุคคล (ทั้งหมด ${totalSessions} ครั้ง):
+${rankText}
+---------------------------------
+🔗 ตรวจสอบสด: ${c.directUrl}`;
+
+      navigator.clipboard.writeText(lineText).then(() => {
+        showToast("ก๊อปปี้รายงานสรุปส่ง LINE เรียบร้อยแล้ว! 📋");
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+  </script>
+</body>
+</html>
 
