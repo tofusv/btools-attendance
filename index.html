@@ -1023,14 +1023,17 @@
         </div>
       </div>
 
-      <!-- Action Button: Copy Summary to LINE & Admin Portal Link -->
-      <div class="hr-action-bar">
+      <!-- Action Button: Copy Summary to LINE & Admin Portal Link & Print A4 -->
+      <div class="hr-action-bar" style="flex-wrap: wrap;">
         <button class="btn-hr-line-copy" onclick="copyLineSummary()">
           💬 ก๊อปปี้สรุปส่ง LINE
         </button>
         <a href="admin.html" class="btn-hr-line-copy" style="background: #37474F; text-decoration: none;" target="_blank">
           ⚙️ Admin Portal
         </a>
+        <button class="btn-hr-line-copy" style="background: #FFF3E0; color: #E65100; border: 1.5px solid #FFE082; width: 100%; flex: 1 1 100%; justify-content: center; margin-top: 4px;" onclick="printCurrentClassA4()">
+          📄 พิมพ์เอกสารคลาส A4 (Print to PDF) 🖨️
+        </button>
       </div>
 
       <!-- Filter Tabs -->
@@ -1919,6 +1922,227 @@ ${rankText}
       }).catch(() => {
         alert("กรุณาก๊อปปี้ข้อความนี้:\n\n" + lineText);
       });
+    }
+
+    /* =========================================================================
+       PRINT A4 CLASS SHEET ENGINE (EXACT MATCH TO TEMPLATE)
+       ========================================================================= */
+    function printCurrentClassA4() {
+      if (!appData) return;
+      const c = appData.courseInfo || {};
+      const students = appData.students || [];
+      const sessions = appData.sessions || [];
+      const maxRows = Math.max(students.length, sessions.length, 15);
+
+      // Student rows HTML
+      let studentRowsHtml = '';
+      for (let i = 0; i < maxRows; i++) {
+        const st = students[i];
+        const no = st ? st.no : (i + 1);
+        const name = st ? st.name : '';
+        const nick = st ? (st.nickname || '') : '';
+        const dept = st ? (st.dept || '') : '';
+
+        studentRowsHtml += `
+          <tr>
+            <td style="text-align:center; width:35px;">${no}</td>
+            <td style="width:190px;">${name}</td>
+            <td style="text-align:center; width:75px;">${nick}</td>
+            <td style="width:110px;">${dept}</td>
+          </tr>
+        `;
+      }
+
+      // Schedule rows HTML
+      let scheduleRowsHtml = '';
+      for (let i = 0; i < maxRows; i++) {
+        const sess = sessions[i];
+        const no = sess ? (sess.no || '') : (i + 1);
+        const dateStr = sess ? sess.dateStr : '';
+        const remark = sess ? (sess.remark || '') : '';
+        const isSkipOrHoliday = sess && sess.isHoliday;
+
+        const rowStyle = isSkipOrHoliday ? 'background-color:#FFF3E0; color:#D84315; font-weight:bold;' : '';
+
+        scheduleRowsHtml += `
+          <tr style="${rowStyle}">
+            <td style="text-align:center; width:35px;">${no}</td>
+            <td style="text-align:center; width:85px;">${dateStr}</td>
+            <td style="width:130px;">${remark}</td>
+          </tr>
+        `;
+      }
+
+      // QR Code URL
+      const fullUrl = window.location.href;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(fullUrl)}`;
+
+      const printWin = window.open('', '_blank', 'width=900,height=1100');
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Class Sheet - ${c.course} (${currentClassName})</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 12mm 15mm;
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+              font-family: 'Sarabun', -apple-system, sans-serif !important;
+            }
+            body {
+              background: white;
+              color: #202124;
+              padding: 10px 15px;
+              font-size: 13px;
+              line-height: 1.4;
+            }
+            .header-logo {
+              height: 36px;
+              width: auto;
+              margin-bottom: 12px;
+              display: block;
+            }
+            .meta-list {
+              margin-bottom: 14px;
+              font-size: 13px;
+              line-height: 1.6;
+            }
+            .meta-item b {
+              display: inline-block;
+              min-width: 85px;
+              color: #000;
+            }
+            .tables-flex {
+              display: flex;
+              gap: 16px;
+              align-items: flex-start;
+              margin-bottom: 24px;
+            }
+            .table-wrap {
+              flex: 1;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 12px;
+            }
+            th {
+              background-color: #E65100;
+              color: white;
+              font-weight: 700;
+              padding: 6px 8px;
+              text-align: center;
+              border: 1px solid #BF360C;
+            }
+            td {
+              padding: 5px 8px;
+              border: 1px solid #BDBDBD;
+              height: 23px;
+              vertical-align: middle;
+            }
+            .qr-section {
+              margin-top: 10px;
+              display: flex;
+              align-items: flex-start;
+              gap: 18px;
+            }
+            .qr-card {
+              border: 1.5px solid #E0E0E0;
+              padding: 8px;
+              border-radius: 12px;
+              display: inline-block;
+              text-align: center;
+              background: #FAFAFA;
+            }
+            .qr-card img {
+              width: 140px;
+              height: 140px;
+              display: block;
+              margin: 0 auto;
+            }
+            .qr-desc {
+              font-size: 12px;
+              color: #555;
+              margin-top: 6px;
+              font-weight: 600;
+            }
+            @media print {
+              body { padding: 0; }
+              .no-print { display: none !important; }
+            }
+          </style>
+        </head>
+        <body onload="window.print();">
+          <img src="https://iili.io/CLrwrGa.png" class="header-logo" alt="B Tools Training">
+          
+          <div class="meta-list">
+            <div class="meta-item"><b>Company:</b> ${c.company || 'B Tools Training'}</div>
+            <div class="meta-item"><b>Course:</b> ${c.course || '-'}</div>
+            <div class="meta-item"><b>Class:</b> ${c.classDuration || '-'}</div>
+            <div class="meta-item"><b>Schedule:</b> ${c.schedule || '-'}</div>
+            <div class="meta-item"><b>Location:</b> ${c.location || '-'}</div>
+            <div class="meta-item"><b>Start date:</b> ${c.startDate || '-'}</div>
+          </div>
+
+          <div class="tables-flex">
+            <!-- Left Table: Students -->
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:35px;">No.</th>
+                    <th>Name</th>
+                    <th style="width:75px;">Nickname</th>
+                    <th style="width:110px;">Department</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${studentRowsHtml}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Right Table: Schedule -->
+            <div class="table-wrap" style="flex: 0.85;">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:35px;">No.</th>
+                    <th style="width:85px;">Date</th>
+                    <th>Remark</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${scheduleRowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="qr-section">
+            <div class="qr-card">
+              <img src="${qrApiUrl}" alt="QR Code">
+              <div class="qr-desc">📱 สแกนเช็คชื่อคลาสนี้</div>
+            </div>
+            <div style="font-size:12px; color:#666; line-height:1.6; padding-top:10px;">
+              <div style="font-weight:700; color:#E65100; font-size:13px; margin-bottom:4px;">💡 คำแนะนำสำหรับผู้สอน / HR:</div>
+              <div>• สามารถนำเอกสารใบนี้ไปวางประจำห้องเรียน หรือส่งไฟล์ PDF ให้ผู้เรียน</div>
+              <div>• ผู้เรียนสามารถเปิดกล้องมือถือสแกน QR Code ด้านซ้ายเพื่อเช็คชื่อเข้าเรียนได้ทันที</div>
+              <div>• สถิติการเช็คชื่อทั้งหมดจะบันทึกเข้าสู่ระบบแบบเรียลไทม์อัตโนมัติ</div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
     }
 
     function openModal(student) {
