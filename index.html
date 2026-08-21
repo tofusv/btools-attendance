@@ -11,7 +11,7 @@
   =============================================================================
   -->
   <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR_DwzCJHTNOWe2e-PBebQn87BD7jyu6w9pjlkCFNDCCt3l8LtkG9S5wK888rfC301Ig/exec"; // 👈 วาง Web App URL จริงของคุณที่นี่
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR_DwzCJHTNOWe2e-PBebQn87BD7jyu6w9pjlkCFNDCCt3l8LtkG9S5wK888rfC301Ig/exec";
   </script>
   <!-- ============================================================================= -->
   
@@ -1076,12 +1076,13 @@
       </div>
       <div id="modal-title" class="modal-title">คุณ Belle</div>
       <div id="modal-subtitle" class="modal-subtitle">Apinya Wichchai</div>
+      <div id="modal-makeup-alert-box" style="display: none;"></div>
       <div class="modal-warning-text">
         🔒 <b>ข้อกำหนด:</b> เครื่องนี้จะถูกผูกกับชื่อคุณตลอดการเรียน และไม่สามารถเช็คชื่อแทนผู้อื่นได้
       </div>
       <div class="modal-actions">
         <button class="btn-modal btn-cancel" onclick="closeModal()">ยกเลิก</button>
-        <button class="btn-modal btn-confirm" onclick="confirmCheckIn()">ยืนยันว่านี่คือฉัน ✔</button>
+        <button id="btn-modal-confirm" class="btn-modal btn-confirm" onclick="confirmCheckIn()">ยืนยันว่านี่คือฉัน ✔</button>
       </div>
     </div>
   </div>
@@ -1432,10 +1433,25 @@
       noticeBox.innerHTML = '';
 
       if (data.isClassToday) {
-        const makeupLabel = data.isAutoMakeupSession ? " (รอบชดเชยอัตโนมัติ)" : "";
-        badge.innerHTML = `📅 วันนี้: <b>${data.currentSessionDate}</b> (เปิดรับเช็คชื่อ${makeupLabel})`;
-        badge.style.background = '#E8F5E9';
-        badge.style.color = '#2E7D32';
+        if (data.isAutoMakeupSession) {
+          badge.innerHTML = `⚠️ วันนี้: <b>${data.currentSessionDate}</b> (เปิดรับรอบชดเชยพิเศษ)`;
+          badge.style.background = '#FFF3E0';
+          badge.style.color = '#E65100';
+
+          noticeBox.innerHTML = `
+            <div class="notice-box notice-warning" style="background:#FFF3E0; border:1.5px solid #FFE082; color:#D84315;">
+              <span>⚠️</span>
+              <div>
+                <b>แจ้งเตือน: วันนี้อยู่นอกตารางเรียนปกติ (${data.currentSessionDate})</b><br>
+                หากผู้สอนหรือ HR นัดหมายให้เรียนชดเชยในวันนี้จริง สามารถแตะชื่อของคุณเพื่อยืนยันเช็คชื่อได้เลยครับ
+              </div>
+            </div>
+          `;
+        } else {
+          badge.innerHTML = `📅 วันนี้: <b>${data.currentSessionDate}</b> (เปิดรับเช็คชื่อ)`;
+          badge.style.background = '#E8F5E9';
+          badge.style.color = '#2E7D32';
+        }
       } else {
         const nextText = data.nextSession ? `รอบถัดไป: <b>${data.nextSession.display}</b>` : '';
         badge.innerHTML = `⛔ วันนี้ไม่มีคลาสเรียน (${data.todayDateStr})`;
@@ -2162,6 +2178,32 @@ ${rankText}
       selectedStudent = student;
       document.getElementById('modal-title').innerText = `คุณ ${student.nickname || student.name}`;
       document.getElementById('modal-subtitle').innerText = `${student.name} ${student.dept && student.dept !== '-' ? '(' + student.dept + ')' : ''}`;
+
+      const makeupBox = document.getElementById('modal-makeup-alert-box');
+      const confirmBtn = document.getElementById('btn-modal-confirm');
+
+      if (appData.isAutoMakeupSession) {
+        makeupBox.style.display = 'block';
+        makeupBox.innerHTML = `
+          <div style="background:#FFF3E0; border:1.5px solid #FFB74D; border-radius:12px; padding:10px 12px; margin-bottom:12px; text-align:left;">
+            <div style="font-weight:700; color:#E65100; font-size:0.92rem; margin-bottom:3px;">
+              ⚠️ แจ้งเตือน: เช็คชื่อรอบชดเชยพิเศษ
+            </div>
+            <div style="font-size:0.83rem; color:#5D4037; line-height:1.4;">
+              วันนี้ (${appData.currentSessionDate}) <b>เป็นวันหยุดหรืออยู่นอกตารางเรียนปกติ</b><br>
+              กรุณากดยืนยัน หากผู้สอนหรือ HR นัดหมายให้เรียนชดเชยในวันนี้จริง
+            </div>
+          </div>
+        `;
+        confirmBtn.innerText = "✔ ยืนยันว่าวันนี้เป็นวันเรียนชดเชย";
+        confirmBtn.style.background = "#E65100";
+      } else {
+        makeupBox.style.display = 'none';
+        makeupBox.innerHTML = '';
+        confirmBtn.innerText = "ยืนยันว่านี่คือฉัน ✔";
+        confirmBtn.style.background = "var(--success)";
+      }
+
       document.getElementById('confirm-modal').style.display = 'flex';
     }
 
