@@ -786,17 +786,31 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">📋 กำหนดหัวข้อประเมิน (Milestones)</label>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 4px;">
-            <label class="weekday-label" style="padding: 8px 10px; font-size: 0.84rem;">
-              <input type="checkbox" id="fc-has-entry-test" checked> 📝 Entry Test
-            </label>
-            <label class="weekday-label" style="padding: 8px 10px; font-size: 0.84rem;">
-              <input type="checkbox" id="fc-has-final-test" checked> 🎓 Final Test
-            </label>
-            <label class="weekday-label" style="padding: 8px 10px; font-size: 0.84rem;">
-              <input type="checkbox" id="fc-has-final-report" checked> 📊 Final Report
-            </label>
+          <label class="form-label">📋 กำหนดหัวข้อประเมิน & ลิงก์ข้อสอบ (Milestones)</label>
+          <div style="background: #F8F9FA; border: 1px solid #E0E0E0; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <!-- Entry Test -->
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <label class="weekday-label" style="padding: 6px 8px; font-size: 0.82rem; width: 140px; margin: 0;">
+                <input type="checkbox" id="fc-has-entry-test" checked> 📝 Entry Test
+              </label>
+              <input type="number" id="fc-entry-test-sess" class="form-input" style="width: 80px; padding: 6px 8px; font-size: 0.8rem;" value="1" min="1" placeholder="ครั้งที่">
+              <input type="url" id="fc-entry-test-url" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="ลิงก์ข้อสอบ (URL)">
+            </div>
+            <!-- Final Test -->
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <label class="weekday-label" style="padding: 6px 8px; font-size: 0.82rem; width: 140px; margin: 0;">
+                <input type="checkbox" id="fc-has-final-test" checked> 🎓 Final Test
+              </label>
+              <input type="number" id="fc-final-test-sess" class="form-input" style="width: 80px; padding: 6px 8px; font-size: 0.8rem;" value="15" min="1" placeholder="ครั้งที่">
+              <input type="url" id="fc-final-test-url" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="ลิงก์ข้อสอบ (URL)">
+            </div>
+            <!-- Final Report -->
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <label class="weekday-label" style="padding: 6px 8px; font-size: 0.82rem; width: 140px; margin: 0;">
+                <input type="checkbox" id="fc-has-final-report" checked> 📊 Final Report
+              </label>
+              <span style="font-size: 0.78rem; color: #757575;">(จัดทำสรุปรายงานผลการเรียนหลังจบคอร์ส)</span>
+            </div>
           </div>
         </div>
 
@@ -876,6 +890,46 @@
           <button class="btn-action primary" onclick="saveStudentRoster()">💾 บันทึกรายชื่อ</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: MILESTONE EXAM CONFIG MODAL -->
+  <div id="milestone-modal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title" id="milestone-modal-title">⚙️ ตั้งค่าแบบทดสอบ</div>
+        <button class="modal-close-btn" onclick="closeModal('milestone-modal')">&times;</button>
+      </div>
+      
+      <form id="milestone-form" onsubmit="saveMilestoneConfig(event)">
+        <input type="hidden" id="mm-class-name">
+        <input type="hidden" id="mm-key">
+        
+        <div class="form-group">
+          <label class="form-label">📌 สถานะ (Status)</label>
+          <select id="mm-status" class="form-input">
+            <option value="pending">⏳ ยังไม่ทำ (Pending)</option>
+            <option value="done">✔ ทำเสร็จแล้ว (Completed)</option>
+            <option value="none">⚪ ไม่มีในคลาสนี้ (Disabled)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🎯 ครั้งที่เรียนที่จะให้แสดงในหน้านักเรียน (Session No.)</label>
+          <input type="number" id="mm-session-no" class="form-input" min="1" max="50" required placeholder="เช่น 1 หรือ 15">
+          <small style="color:var(--text-muted); font-size:0.75rem;">เมื่อถึงรอบเรียนครั้งนี้ ลิงก์ข้อสอบจะไปโผล่ที่หน้าเช็คชื่อของนักเรียนโดยอัตโนมัติ</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🔗 ลิงก์แบบทดสอบ / Google Form (URL)</label>
+          <input type="url" id="mm-url" class="form-input" placeholder="https://forms.gle/... หรือ https://docs.google.com/forms/...">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 18px;">
+          <button type="button" class="btn-action" style="flex: 1; justify-content: center;" onclick="closeModal('milestone-modal')">ยกเลิก</button>
+          <button type="submit" class="btn-action primary" style="flex: 2; justify-content: center;">💾 บันทึกการตั้งค่า</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1073,65 +1127,163 @@
       });
     }
 
-    function renderMilestoneChip(className, key, label, item) {
-      if (!item || !item.enabled) {
-        return `
-          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding:6px 10px; border-radius:8px; background:#ECEFF1; border:1px dashed #B0BEC5; color:#78909C;">
-            <span style="font-weight:500;">${label}</span>
-            <span style="font-size:0.7rem; font-weight:600; background:#CFD8DC; color:#546E7A; padding:2px 8px; border-radius:6px;">- ไม่มีในคลาสนี้ -</span>
-          </div>
-        `;
+    function normalizeMilestoneObj(m, defaultSessionNo) {
+      if (!m) return { status: "none", sessionNo: defaultSessionNo || 1, url: "" };
+      if (typeof m === 'string') return { status: m, sessionNo: defaultSessionNo || 1, url: "" };
+      let status = "none";
+      if (m.status) {
+        status = m.status;
+      } else if (m.enabled === false) {
+        status = "none";
+      } else if (m.done === true) {
+        status = "done";
+      } else if (m.enabled === true) {
+        status = "pending";
       }
-
-      if (item.done) {
-        return `
-          <div onclick="toggleMilestone('${className}', '${key}')" style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; padding:6px 10px; border-radius:8px; background:#E8F5E9; border:1.5px solid #81C784; color:#1B5E20; cursor:pointer; user-select:none; transition:all 0.2s;" title="แตะเพื่อเปลี่ยนสถานะ">
-            <span style="font-weight:700;">${label}</span>
-            <span style="font-size:0.75rem; font-weight:700; background:#2E7D32; color:#FFFFFF; padding:2px 8px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">✔ ทำเรียบร้อยแล้ว</span>
-          </div>
-        `;
-      } else {
-        return `
-          <div onclick="toggleMilestone('${className}', '${key}')" style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; padding:6px 10px; border-radius:8px; background:#FFF3E0; border:1.5px solid #FFB74D; color:#BF360C; cursor:pointer; user-select:none; transition:all 0.2s;" title="แตะเพื่อเปลี่ยนสถานะ">
-            <span style="font-weight:700;">${label}</span>
-            <span style="font-size:0.75rem; font-weight:700; background:#FFE082; color:#BF360C; padding:2px 8px; border-radius:6px; border:1px solid #FFD54F;">⏳ ยังไม่ทำ (แตะเมื่อเสร็จ)</span>
-          </div>
-        `;
-      }
+      return {
+        status: status,
+        sessionNo: parseInt(m.sessionNo || defaultSessionNo || 1),
+        url: (m.url || "").toString().trim()
+      };
     }
 
-    async function toggleMilestone(className, key) {
+    function renderMilestoneChip(className, key, label, item) {
+      const m = normalizeMilestoneObj(item, key === 'entryTest' ? 1 : 15);
+      const isTest = (key === 'entryTest' || key === 'finalTest');
+
+      let statusBadge = '';
+      let chipBorder = '';
+      let chipBg = '';
+
+      if (m.status === 'none') {
+        chipBg = '#F5F5F5';
+        chipBorder = '1px dashed #CFD8DC';
+        statusBadge = `<span onclick="cycleMilestoneStatus('${className}', '${key}', event)" style="font-size:0.75rem; font-weight:700; background:#CFD8DC; color:#546E7A; padding:3px 8px; border-radius:6px; cursor:pointer;" title="แตะเพื่อเปลี่ยนสถานะ">- ไม่มี -</span>`;
+      } else if (m.status === 'done') {
+        chipBg = '#E8F5E9';
+        chipBorder = '1.5px solid #81C784';
+        statusBadge = `<span onclick="cycleMilestoneStatus('${className}', '${key}', event)" style="font-size:0.75rem; font-weight:700; background:#2E7D32; color:#FFFFFF; padding:3px 8px; border-radius:6px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.1);" title="แตะเพื่อเปลี่ยนสถานะ">✔ ทำเสร็จแล้ว</span>`;
+      } else { // pending
+        chipBg = '#FFF3E0';
+        chipBorder = '1.5px solid #FFB74D';
+        statusBadge = `<span onclick="cycleMilestoneStatus('${className}', '${key}', event)" style="font-size:0.75rem; font-weight:700; background:#FFE082; color:#BF360C; padding:3px 8px; border-radius:6px; border:1px solid #FFD54F; cursor:pointer;" title="แตะเพื่อเปลี่ยนสถานะ">⏳ ยังไม่ทำ</span>`;
+      }
+
+      let configBtn = '';
+      if (isTest) {
+        const linkBadge = m.url ? `<span style="color:#1565C0; font-size:0.72rem; font-weight:700;">🔗 ลิงก์แล้ว</span>` : `<span style="color:#9E9E9E; font-size:0.72rem;">+ลิงก์</span>`;
+        configBtn = `
+          <button onclick="openMilestoneConfigModal('${className}', '${key}')" class="btn-action" style="padding: 2px 8px; font-size: 0.72rem; background: white; border: 1px solid #B0BEC5; border-radius: 6px; display: inline-flex; align-items: center; gap: 3px;" title="ตั้งค่าครั้งที่เรียนและใส่ลิงก์ข้อสอบ">
+            ⚙️ ครั้งที่ ${m.sessionNo || 1} ${linkBadge}
+          </button>
+        `;
+      }
+
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; padding:6px 10px; border-radius:8px; background:${chipBg}; border:${chipBorder}; gap:8px;">
+          <span style="font-weight:700; color:#263238; display:flex; align-items:center; gap:6px;">
+            ${label}
+            ${configBtn}
+          </span>
+          <div>${statusBadge}</div>
+        </div>
+      `;
+    }
+
+    async function cycleMilestoneStatus(className, key, e) {
+      if (e) e.stopPropagation();
       if (!adminData) return;
       const c = adminData.classes.find(item => item.className === className);
       if (!c) return;
 
       if (!c.milestones) {
         c.milestones = {
-          entryTest: { enabled: true, done: false },
-          finalTest: { enabled: true, done: false },
-          finalReport: { enabled: true, done: false }
+          entryTest: { status: "pending", sessionNo: 1, url: "" },
+          finalTest: { status: "pending", sessionNo: c.totalSessions || 15, url: "" },
+          finalReport: { status: "pending" }
         };
       }
 
-      const item = c.milestones[key] || { enabled: true, done: false };
-      item.done = !item.done;
-      c.milestones[key] = item;
+      const m = normalizeMilestoneObj(c.milestones[key], key === 'entryTest' ? 1 : (c.totalSessions || 15));
+      
+      // Cycle: none -> pending -> done -> none
+      if (m.status === 'none') {
+        m.status = 'pending';
+      } else if (m.status === 'pending') {
+        m.status = 'done';
+      } else {
+        m.status = 'none';
+      }
 
-      // 1. Optimistic UI Re-render
+      c.milestones[key] = m;
       renderAdminDashboard(adminData);
-      const title = key === 'entryTest' ? 'Entry Test' : key === 'finalTest' ? 'Final Test' : 'Final Report';
-      showToast(`${title}: ${item.done ? 'ทำเรียบร้อย ✔' : 'รอทำ ⏳'}`);
 
-      // 2. Background Sync
+      const title = key === 'entryTest' ? 'Entry Test' : key === 'finalTest' ? 'Final Test' : 'Final Report';
+      const statusText = m.status === 'done' ? 'ทำเสร็จแล้ว ✔' : (m.status === 'pending' ? 'ยังไม่ทำ ⏳' : 'ไม่มี ⚪');
+      showToast(`${title}: ${statusText}`);
+
       try {
         await adminApiRequest("updateClassMilestones", {
           className: className,
           milestones: c.milestones
         });
       } catch (err) {
-        item.done = !item.done;
-        renderAdminDashboard(adminData);
         alert("บันทึกสถานะไม่สำเร็จ: " + err.message);
+      }
+    }
+
+    function openMilestoneConfigModal(className, key) {
+      const c = adminData.classes.find(item => item.className === className);
+      if (!c) return;
+
+      const m = normalizeMilestoneObj(c.milestones && c.milestones[key], key === 'entryTest' ? 1 : (c.totalSessions || 15));
+      
+      document.getElementById('mm-class-name').value = className;
+      document.getElementById('mm-key').value = key;
+      document.getElementById('milestone-modal-title').innerText = `⚙️ ตั้งค่า ${key === 'entryTest' ? 'Entry Test' : 'Final Test'} (${className})`;
+      document.getElementById('mm-status').value = m.status || 'pending';
+      document.getElementById('mm-session-no').value = m.sessionNo || (key === 'entryTest' ? 1 : (c.totalSessions || 15));
+      document.getElementById('mm-url').value = m.url || '';
+
+      openModal('milestone-modal');
+    }
+
+    async function saveMilestoneConfig(e) {
+      e.preventDefault();
+      const className = document.getElementById('mm-class-name').value;
+      const key = document.getElementById('mm-key').value;
+      const status = document.getElementById('mm-status').value;
+      const sessionNo = parseInt(document.getElementById('mm-session-no').value) || 1;
+      const url = document.getElementById('mm-url').value.trim();
+
+      const c = adminData.classes.find(item => item.className === className);
+      if (!c) return;
+
+      if (!c.milestones) {
+        c.milestones = {
+          entryTest: { status: "pending", sessionNo: 1, url: "" },
+          finalTest: { status: "pending", sessionNo: c.totalSessions || 15, url: "" },
+          finalReport: { status: "pending" }
+        };
+      }
+
+      c.milestones[key] = {
+        status: status,
+        sessionNo: sessionNo,
+        url: url
+      };
+
+      closeModal('milestone-modal');
+      renderAdminDashboard(adminData);
+      showToast(`บันทึกการตั้งค่า ${key === 'entryTest' ? 'Entry Test' : 'Final Test'} สำเร็จ! 🚀`);
+
+      try {
+        await adminApiRequest("updateClassMilestones", {
+          className: className,
+          milestones: c.milestones
+        });
+      } catch (err) {
+        alert("บันทึกไม่สำเร็จ: " + err.message);
       }
     }
 
@@ -1150,8 +1302,14 @@
       document.getElementById('new-class-form').reset();
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('fc-start-date').value = today;
+      document.getElementById('fc-instructor').value = '';
+      document.getElementById('fc-learning-format').value = 'On-site';
       document.getElementById('fc-has-entry-test').checked = true;
+      document.getElementById('fc-entry-test-sess').value = 1;
+      document.getElementById('fc-entry-test-url').value = '';
       document.getElementById('fc-has-final-test').checked = true;
+      document.getElementById('fc-final-test-sess').value = 15;
+      document.getElementById('fc-final-test-url').value = '';
       document.getElementById('fc-has-final-report').checked = true;
       openModal('new-class-modal');
     }
@@ -1167,8 +1325,17 @@
       const startDate = document.getElementById('fc-start-date').value;
       const totalSessions = document.getElementById('fc-sessions-count').value;
 
+      const instructor = document.getElementById('fc-instructor').value.trim();
+      const learningFormat = document.getElementById('fc-learning-format').value;
+
       const hasEntryTest = document.getElementById('fc-has-entry-test').checked;
+      const entryTestSessionNo = parseInt(document.getElementById('fc-entry-test-sess').value) || 1;
+      const entryTestUrl = document.getElementById('fc-entry-test-url').value.trim();
+
       const hasFinalTest = document.getElementById('fc-has-final-test').checked;
+      const finalTestSessionNo = parseInt(document.getElementById('fc-final-test-sess').value) || parseInt(totalSessions) || 15;
+      const finalTestUrl = document.getElementById('fc-final-test-url').value.trim();
+
       const hasFinalReport = document.getElementById('fc-has-final-report').checked;
 
       const checkedDays = Array.from(document.querySelectorAll('input[name="fc-days"]:checked')).map(cb => parseInt(cb.value));
@@ -1205,8 +1372,14 @@
           startDate: startDate,
           daysOfWeek: checkedDays,
           totalSessions: totalSessions,
+          instructor: instructor,
+          learningFormat: learningFormat,
           hasEntryTest: hasEntryTest,
+          entryTestSessionNo: entryTestSessionNo,
+          entryTestUrl: entryTestUrl,
           hasFinalTest: hasFinalTest,
+          finalTestSessionNo: finalTestSessionNo,
+          finalTestUrl: finalTestUrl,
           hasFinalReport: hasFinalReport,
           students: students
         });
