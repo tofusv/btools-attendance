@@ -754,27 +754,32 @@
           </div>
         </div>
 
-        <!-- Row 2: Course Title & Client Logo -->
+        <!-- Row 2: Course Title & Client Logo (File Upload + URL) -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">📚 หลักสูตร (Course Title) *</label>
             <input type="text" id="fc-course" class="form-input" placeholder="เช่น English for Wellness (Spa, Fitness)" required>
           </div>
           <div class="form-group">
-            <label class="form-label">🖼️ โลโก้ลูกค้า (Client Logo URL)</label>
-            <input type="text" id="fc-client-logo" class="form-input" placeholder="เช่น https://... หรือ iili.io/...">
+            <label class="form-label">🖼️ โลโก้ลูกค้า (เลือกไฟล์จากคอม หรือวาง URL)</label>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <label class="btn-action" style="cursor: pointer; padding: 7px 11px; font-size: 0.78rem; background: white; border: 1.5px solid #90CAF9; color: #1565C0; font-weight: 700; white-space: nowrap; margin: 0; display: inline-flex; align-items: center; gap: 4px;">
+                📁 เลือกรูป
+                <input type="file" id="fc-client-logo-file" accept="image/*" style="display: none;" onchange="handleClientLogoFile(event)">
+              </label>
+              <input type="text" id="fc-client-logo" class="form-input" style="flex: 1; padding: 6px 8px; font-size: 0.8rem;" placeholder="หรือวางลิงก์รูปภาพ..." oninput="updateClientLogoPreview()">
+              <div id="fc-logo-preview-box" style="display: none; align-items: center; justify-content: center; width: 38px; height: 38px; background: #FAFAFA; border: 1px solid #CFD8DC; border-radius: 8px; overflow: hidden; padding: 2px; flex-shrink: 0;">
+                <img id="fc-logo-preview-img" src="" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Row 3: Instructor, Location & Learning Format -->
+        <!-- Row 3: Instructor & Learning Format -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">👨‍🏫 ครูผู้สอน (Instructor)</label>
             <input type="text" id="fc-instructor" class="form-input" placeholder="เช่น Teacher Sarah / ครูต้น">
-          </div>
-          <div class="form-group">
-            <label class="form-label">📍 สถานที่เรียน / ลิงก์ (Location)</label>
-            <input type="text" id="fc-location" class="form-input" placeholder="เช่น ห้องประชุม A ชั้น 3 / Zoom">
           </div>
           <div class="form-group">
             <label class="form-label">🌐 รูปแบบการเรียน (Format)</label>
@@ -784,6 +789,12 @@
               <option value="Hybrid (On-site & Online)">🔄 Hybrid (On-site & Online)</option>
             </select>
           </div>
+        </div>
+
+        <!-- Row 4: Location (Full Width / 2 Columns) -->
+        <div class="form-group">
+          <label class="form-label">📍 สถานที่เรียน / ลิงก์ห้องเรียน (Location / Room)</label>
+          <input type="text" id="fc-location" class="form-input" placeholder="เช่น ห้องประชุม Spa ชั้น 3, อาคาร DTBK หรือลิงก์ Zoom / Google Meet">
         </div>
 
         <!-- ⚡ Smart Course Hours & Sessions Auto-Calculator Box -->
@@ -2062,6 +2073,37 @@ ${rankText}
       });
     }
 
+    /* 🖼️ CLIENT LOGO FILE UPLOAD & PREVIEW */
+    function handleClientLogoFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 3 * 1024 * 1024) {
+        alert("ไฟล์รูปภาพมีขนาดใหญ่เกินไป กรุณาใช้ไฟล์ขนาดไม่เกิน 3MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.getElementById('fc-client-logo').value = evt.target.result;
+        updateClientLogoPreview();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateClientLogoPreview() {
+      const val = document.getElementById('fc-client-logo').value.trim();
+      const box = document.getElementById('fc-logo-preview-box');
+      const img = document.getElementById('fc-logo-preview-img');
+      if (val) {
+        img.src = val;
+        box.style.display = 'flex';
+      } else {
+        box.style.display = 'none';
+        img.src = '';
+      }
+    }
+
     /* =========================================================================
        PRINT A4 CLASS SHEET ENGINE (EXACT MATCH TO TEMPLATE)
        ========================================================================= */
@@ -2083,20 +2125,20 @@ ${rankText}
         const nick = st ? (st.nickname || '') : '';
         const dept = st ? (st.dept || '') : '';
 
-        const nameFont = name.length > 25 ? '9.5px' : (name.length > 18 ? '10.5px' : '11.5px');
-        const deptFont = dept.length > 22 ? '9px' : (dept.length > 16 ? '10px' : '11px');
+        const nameFont = name.length > 25 ? '10px' : (name.length > 18 ? '11px' : '12px');
+        const deptFont = dept.length > 22 ? '9.5px' : (dept.length > 16 ? '10.5px' : '11.5px');
 
         studentRowsHtml += `
           <tr>
-            <td style="text-align:center; width:28px; font-size:11px; padding:2px 4px;">${no}</td>
-            <td style="font-size:${nameFont}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:2px 5px;" title="${escapeHtml(name)}">${name}</td>
-            <td style="text-align:center; width:55px; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:2px 4px;">${nick}</td>
-            <td style="font-size:${deptFont}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:2px 5px;" title="${escapeHtml(dept)}">${dept}</td>
+            <td style="text-align:center; width:28px; font-size:11.5px; padding:3px 4px;">${no}</td>
+            <td style="font-size:${nameFont}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:3px 6px;" title="${escapeHtml(name)}">${name}</td>
+            <td style="text-align:center; width:58px; font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:3px 4px;">${nick}</td>
+            <td style="font-size:${deptFont}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:3px 6px;" title="${escapeHtml(dept)}">${dept}</td>
           </tr>
         `;
       }
 
-      // Schedule rows HTML (Strict Single-Line)
+      // Schedule rows HTML (Strict Single-Line with narrow remark)
       let scheduleRowsHtml = '';
       for (let i = 0; i < maxRows; i++) {
         const sess = sessions[i];
@@ -2109,9 +2151,9 @@ ${rankText}
 
         scheduleRowsHtml += `
           <tr style="${rowStyle}">
-            <td style="text-align:center; width:28px; font-size:11px; padding:2px 4px;">${no}</td>
-            <td style="text-align:center; width:80px; font-size:11px; white-space:nowrap; padding:2px 4px;">${dateStr}</td>
-            <td style="font-size:10.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:2px 5px;" title="${escapeHtml(remark)}">${remark}</td>
+            <td style="text-align:center; width:28px; font-size:11.5px; padding:3px 4px;">${no}</td>
+            <td style="text-align:center; width:82px; font-size:11.5px; white-space:nowrap; padding:3px 4px;">${dateStr}</td>
+            <td style="font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:3px 6px;" title="${escapeHtml(remark)}">${remark}</td>
           </tr>
         `;
       }
@@ -2133,7 +2175,7 @@ ${rankText}
           <style>
             @page {
               size: A4 portrait;
-              margin: 10mm 12mm 10mm 12mm;
+              margin: 11mm 14mm 11mm 14mm;
             }
             * {
               box-sizing: border-box;
@@ -2145,21 +2187,21 @@ ${rankText}
               background: white;
               color: #202124;
               padding: 6px 10px;
-              font-size: 12px;
-              line-height: 1.35;
+              font-size: 12.5px;
+              line-height: 1.4;
             }
             .meta-list {
-              font-size: 12.5px;
-              line-height: 1.5;
+              font-size: 13px;
+              line-height: 1.62;
             }
             .meta-item b {
               display: inline-block;
-              min-width: 80px;
+              min-width: 82px;
               color: #000;
             }
             .tables-flex {
               display: flex;
-              gap: 14px;
+              gap: 16px;
               align-items: flex-start;
               margin-bottom: 12px;
             }
@@ -2175,14 +2217,14 @@ ${rankText}
               background-color: #E65100;
               color: white;
               font-weight: 700;
-              padding: 5px 6px;
+              padding: 6px 6px;
               text-align: center;
-              font-size: 11.5px;
+              font-size: 12px;
               border: 1px solid #BF360C;
             }
             td {
               border: 1px solid #BDBDBD;
-              height: 20px;
+              height: 23.5px;
               vertical-align: middle;
               line-height: 1.15;
             }
@@ -2194,15 +2236,15 @@ ${rankText}
         </head>
         <body onload="window.print();">
           <!-- Top Header: Dual Logo + Metadata on Left, QR Code on Right -->
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 16px;">
             <!-- Left Header -->
             <div style="flex: 1;">
               <!-- Dual Logos: B Tools Training + Client Logo -->
-              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                <img src="https://iili.io/CLrwrGa.png" style="height: 38px; width: auto; display: block;" alt="B Tools Training">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                <img src="https://iili.io/CLrwrGa.png" style="height: 38px; width: auto; object-fit: contain; display: block;" alt="B Tools Training">
                 ${c.clientLogoUrl ? `
                   <span style="color: #CFD8DC; font-size: 1.6rem; font-weight: 300; line-height: 1;">|</span>
-                  <img src="${c.clientLogoUrl}" style="height: 36px; max-width: 160px; object-fit: contain; display: block;" alt="${escapeHtml(c.company || 'Client')} Logo">
+                  <img src="${c.clientLogoUrl}" style="height: 38px; max-width: 170px; object-fit: contain; display: block;" alt="${escapeHtml(c.company || 'Client')} Logo">
                 ` : ''}
               </div>
 
@@ -2218,8 +2260,8 @@ ${rankText}
             </div>
 
             <!-- Top Right QR Code Box -->
-            <div style="flex-shrink: 0; text-align: center; border: 1.5px solid #E0E0E0; background: #FAFAFA; border-radius: 12px; padding: 8px 10px; width: 140px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
-              <img src="${qrApiUrl}" style="width: 120px; height: 120px; display: block; margin: 0 auto;" alt="QR Code">
+            <div style="flex-shrink: 0; text-align: center; border: 1.5px solid #E0E0E0; background: #FAFAFA; border-radius: 12px; padding: 9px 11px; width: 142px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+              <img src="${qrApiUrl}" style="width: 122px; height: 122px; display: block; margin: 0 auto;" alt="QR Code">
               <div style="font-size: 11px; font-weight: 700; color: #E65100; margin-top: 4px;">📱 สแกนเช็คชื่อ</div>
               <div style="font-size: 9.5px; color: #757575;">(Scan for Check-in)</div>
             </div>
@@ -2227,15 +2269,15 @@ ${rankText}
 
           <!-- Tables Section -->
           <div class="tables-flex">
-            <!-- Left Table: Students -->
-            <div class="table-wrap" style="flex: 1.15;">
+            <!-- Left Table: Students (Spacious & Clean) -->
+            <div class="table-wrap" style="flex: 1.3;">
               <table>
                 <thead>
                   <tr>
                     <th style="width:28px;">No.</th>
-                    <th style="width:190px;">Name</th>
-                    <th style="width:55px;">Nickname</th>
-                    <th style="width:125px;">Department</th>
+                    <th style="width:195px;">Name</th>
+                    <th style="width:58px;">Nickname</th>
+                    <th style="width:130px;">Department</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2244,13 +2286,13 @@ ${rankText}
               </table>
             </div>
 
-            <!-- Right Table: Schedule -->
+            <!-- Right Table: Schedule (Narrow Remark) -->
             <div class="table-wrap" style="flex: 0.85;">
               <table>
                 <thead>
                   <tr>
                     <th style="width:28px;">No.</th>
-                    <th style="width:80px;">Date</th>
+                    <th style="width:82px;">Date</th>
                     <th>Remark</th>
                   </tr>
                 </thead>
@@ -2262,9 +2304,9 @@ ${rankText}
           </div>
 
           <!-- Bottom Instructions Footer -->
-          <div style="margin-top: 10px; font-size: 11px; color: #616161; border-top: 1px dashed #E0E0E0; padding-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="margin-top: 14px; font-size: 11.5px; color: #555; border-top: 1px dashed #CFD8DC; padding-top: 8px; display: flex; justify-content: space-between; align-items: center;">
             <div>💡 <b>คำแนะนำ:</b> ผู้เรียนสามารถเปิดกล้องมือถือสแกน QR Code ด้านบนขวา เพื่อเช็คชื่อเข้าเรียนแบบเรียลไทม์ได้ทันที</div>
-            <div style="font-weight: 700; color: #E65100; font-size: 10.5px;">B Tools Training</div>
+            <div style="font-weight: 700; color: #E65100; font-size: 11px;">B Tools Training</div>
           </div>
         </body>
         </html>
