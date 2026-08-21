@@ -11,7 +11,7 @@
   =============================================================================
   -->
   <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR_DwzCJHTNOWe2e-PBebQn87BD7jyu6w9pjlkCFNDCCt3l8LtkG9S5wK888rfC301Ig/exec"; // 👈 วาง Web App URL จริงของคุณที่นี่
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR_DwzCJHTNOWe2e-PBebQn87BD7jyu6w9pjlkCFNDCCt3l8LtkG9S5wK888rfC301Ig/exec";
   </script>
   <!-- ============================================================================= -->
 
@@ -976,6 +976,10 @@
 
         const studentCount = c.students ? c.students.length : 0;
         const rate = c.attendanceRate || 0;
+        const totalSess = c.totalSessions || 15;
+        const completedSess = c.completedSessions || 0;
+        const sessionProgressPercent = totalSess > 0 ? Math.min(100, Math.round((completedSess / totalSess) * 100)) : 0;
+        const currentSessText = c.currentSessionDisplay || (completedSess >= totalSess ? "จบคอร์สแล้ว" : `ครั้งที่ ${completedSess + 1}`);
 
         card.innerHTML = `
           <div class="class-card-top">
@@ -986,8 +990,9 @@
             <h3 class="class-course-title">${c.course}</h3>
             <div class="class-meta-item">🏢 <b>${c.company || 'ลูกค้า'}</b> (${c.classDuration || '-'})</div>
             <div class="class-meta-item">⏰ ${c.schedule || '-'}</div>
-            <div class="class-meta-item">👥 ผู้เรียน: <b>${studentCount} คน</b> | ทั้งหมด ${c.totalSessions || 15} ครั้ง</div>
+            <div class="class-meta-item">👥 ผู้เรียน: <b>${studentCount} คน</b> | ทั้งหมด <b>${totalSess} ครั้ง</b></div>
 
+            <!-- 1. Progress Bar: อัตราการเข้าเรียนรวม -->
             <div class="class-progress-box">
               <div class="class-progress-row">
                 <span>อัตราการเข้าเรียนรวม</span>
@@ -997,6 +1002,34 @@
                 <div class="progress-bar-fill" style="width: ${rate}%;"></div>
               </div>
             </div>
+
+            <!-- 2. Progress Bar: ความคืบหน้าจำนวนครั้งที่เรียน (UI สไตล์เดียวกัน) -->
+            <div class="class-progress-box" style="margin-top: 8px;">
+              <div class="class-progress-row">
+                <span>ความคืบหน้าคอร์สเรียน</span>
+                <span style="font-weight:700; color:var(--primary-dark);">${completedSess} / ${totalSess} ครั้ง (${sessionProgressPercent}%)</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: ${sessionProgressPercent}%; background: linear-gradient(90deg, #FF9800, #E65100);"></div>
+              </div>
+            </div>
+
+            <!-- 3. Mini 3-Stat KPI Chips -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; text-align: center;">
+              <div style="background: #F8F9FA; border: 1px solid #EEEEEE; border-radius: 10px; padding: 6px 2px;">
+                <div style="font-size: 0.7rem; color: #757575; font-weight: 600;">ครั้งทั้งหมด</div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: #263238; margin-top: 1px;">${totalSess} <span style="font-size:0.7rem; font-weight:500;">ครั้ง</span></div>
+              </div>
+              <div style="background: #E8F5E9; border: 1px solid #C8E6C9; border-radius: 10px; padding: 6px 2px;">
+                <div style="font-size: 0.7rem; color: #2E7D32; font-weight: 600;">ผ่านไปแล้ว</div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: #2E7D32; margin-top: 1px;">${completedSess} <span style="font-size:0.7rem; font-weight:500;">ครั้ง</span></div>
+              </div>
+              <div style="background: #FFF3E0; border: 1px solid #FFE0B2; border-radius: 10px; padding: 6px 2px;">
+                <div style="font-size: 0.7rem; color: #E65100; font-weight: 600;">รอบปัจจุบัน</div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: #E65100; margin-top: 1px;">${currentSessText}</div>
+              </div>
+            </div>
+
           </div>
 
           <div class="class-actions-grid">
