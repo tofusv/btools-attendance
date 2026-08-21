@@ -771,6 +771,21 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">📋 กำหนดหัวข้อประเมิน (Milestones)</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 4px;">
+            <label class="weekday-label" style="padding: 8px 10px; font-size: 0.84rem;">
+              <input type="checkbox" id="fc-has-entry-test" checked> 📝 Entry Test
+            </label>
+            <label class="weekday-label" style="padding: 8px 10px; font-size: 0.84rem;">
+              <input type="checkbox" id="fc-has-final-test" checked> 🎓 Final Test
+            </label>
+            <label class="weekday-label" style="padding: 8px 10px; font-size: 0.84rem;">
+              <input type="checkbox" id="fc-has-final-report" checked> 📊 Final Report
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">รายชื่อนักเรียนเริ่มต้น (วางหลายๆ บรรทัดได้เลย)</label>
           <textarea id="fc-students-raw" class="form-textarea" rows="4" placeholder="พิมพ์หรือวางชื่อนักเรียน เช่น:
 คุณ สมชาย ใจดี (ต้น) - IT
@@ -980,6 +995,11 @@
         const completedSess = c.completedSessions || 0;
         const sessionProgressPercent = totalSess > 0 ? Math.min(100, Math.round((completedSess / totalSess) * 100)) : 0;
         const currentSessText = c.currentSessionDisplay || (completedSess >= totalSess ? "จบคอร์สแล้ว" : `ครั้งที่ ${completedSess + 1}`);
+        const milestones = c.milestones || {
+          entryTest: { enabled: true, done: false },
+          finalTest: { enabled: true, done: false },
+          finalReport: { enabled: true, done: false }
+        };
 
         card.innerHTML = `
           <div class="class-card-top">
@@ -992,18 +1012,7 @@
             <div class="class-meta-item">⏰ ${c.schedule || '-'}</div>
             <div class="class-meta-item">👥 ผู้เรียน: <b>${studentCount} คน</b> | ทั้งหมด <b>${totalSess} ครั้ง</b></div>
 
-            <!-- 1. Progress Bar: อัตราการเข้าเรียนรวม -->
-            <div class="class-progress-box">
-              <div class="class-progress-row">
-                <span>อัตราการเข้าเรียนรวม</span>
-                <span>${rate}%</span>
-              </div>
-              <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: ${rate}%;"></div>
-              </div>
-            </div>
-
-            <!-- 2. Progress Bar: ความคืบหน้าจำนวนครั้งที่เรียน (UI สไตล์เดียวกัน) -->
+            <!-- Progress Bar: ความคืบหน้าจำนวนครั้งที่เรียน -->
             <div class="class-progress-box" style="margin-top: 8px;">
               <div class="class-progress-row">
                 <span>ความคืบหน้าคอร์สเรียน</span>
@@ -1014,8 +1023,8 @@
               </div>
             </div>
 
-            <!-- 3. Mini 3-Stat KPI Chips -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; text-align: center;">
+            <!-- Mini 3-Stat KPI Chips -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; text-align: center;">
               <div style="background: #F8F9FA; border: 1px solid #EEEEEE; border-radius: 10px; padding: 6px 2px;">
                 <div style="font-size: 0.7rem; color: #757575; font-weight: 600;">ครั้งทั้งหมด</div>
                 <div style="font-size: 0.95rem; font-weight: 800; color: #263238; margin-top: 1px;">${totalSess} <span style="font-size:0.7rem; font-weight:500;">ครั้ง</span></div>
@@ -1027,6 +1036,19 @@
               <div style="background: #FFF3E0; border: 1px solid #FFE0B2; border-radius: 10px; padding: 6px 2px;">
                 <div style="font-size: 0.7rem; color: #E65100; font-weight: 600;">รอบปัจจุบัน</div>
                 <div style="font-size: 0.95rem; font-weight: 800; color: #E65100; margin-top: 1px;">${currentSessText}</div>
+              </div>
+            </div>
+
+            <!-- Milestones / Deliverables Checklist -->
+            <div style="margin-top: 10px; background: #FAFAFA; border: 1px solid #EEEEEE; border-radius: 12px; padding: 8px 10px;">
+              <div style="font-size: 0.75rem; font-weight: 700; color: #616161; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <span>📋 การประเมิน & ส่งมอบ (Milestones)</span>
+                <span style="font-size: 0.68rem; color: #9E9E9E;">แตะเพื่อเปลี่ยนสถานะ</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 5px;">
+                ${renderMilestoneChip(c.className, 'entryTest', '📝 Entry Test', milestones.entryTest)}
+                ${renderMilestoneChip(c.className, 'finalTest', '🎓 Final Test', milestones.finalTest)}
+                ${renderMilestoneChip(c.className, 'finalReport', '📊 Final Report', milestones.finalReport)}
               </div>
             </div>
 
@@ -1055,6 +1077,68 @@
       });
     }
 
+    function renderMilestoneChip(className, key, label, item) {
+      if (!item || !item.enabled) {
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; padding:4px 8px; border-radius:6px; background:#F5F5F5; color:#9E9E9E;">
+            <span>${label}</span>
+            <span style="font-size:0.7rem; color:#9E9E9E;">(ไม่มีในคลาสนี้)</span>
+          </div>
+        `;
+      }
+
+      if (item.done) {
+        return `
+          <div onclick="toggleMilestone('${className}', '${key}')" style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; padding:5px 8px; border-radius:8px; background:#E8F5E9; border:1px solid #C8E6C9; color:#2E7D32; cursor:pointer; user-select:none;" title="แตะเพื่อเปลี่ยนสถานะ">
+            <span style="font-weight:600;">${label}</span>
+            <span style="font-size:0.72rem; font-weight:700; background:#2E7D32; color:white; padding:1px 6px; border-radius:4px;">✔ ทำเรียบร้อย</span>
+          </div>
+        `;
+      } else {
+        return `
+          <div onclick="toggleMilestone('${className}', '${key}')" style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; padding:5px 8px; border-radius:8px; background:#FFF8E1; border:1px solid #FFE082; color:#E65100; cursor:pointer; user-select:none;" title="แตะเพื่อเปลี่ยนสถานะ">
+            <span style="font-weight:600;">${label}</span>
+            <span style="font-size:0.72rem; font-weight:700; background:#FFE082; color:#E65100; padding:1px 6px; border-radius:4px;">⏳ รอทำ (แตะเมื่อเสร็จ)</span>
+          </div>
+        `;
+      }
+    }
+
+    async function toggleMilestone(className, key) {
+      if (!adminData) return;
+      const c = adminData.classes.find(item => item.className === className);
+      if (!c) return;
+
+      if (!c.milestones) {
+        c.milestones = {
+          entryTest: { enabled: true, done: false },
+          finalTest: { enabled: true, done: false },
+          finalReport: { enabled: true, done: false }
+        };
+      }
+
+      const item = c.milestones[key] || { enabled: true, done: false };
+      item.done = !item.done;
+      c.milestones[key] = item;
+
+      // 1. Optimistic UI Re-render
+      renderAdminDashboard(adminData);
+      const title = key === 'entryTest' ? 'Entry Test' : key === 'finalTest' ? 'Final Test' : 'Final Report';
+      showToast(`${title}: ${item.done ? 'ทำเรียบร้อย ✔' : 'รอทำ ⏳'}`);
+
+      // 2. Background Sync
+      try {
+        await adminApiRequest("updateClassMilestones", {
+          className: className,
+          milestones: c.milestones
+        });
+      } catch (err) {
+        item.done = !item.done;
+        renderAdminDashboard(adminData);
+        alert("บันทึกสถานะไม่สำเร็จ: " + err.message);
+      }
+    }
+
     /* =========================================================================
        MODAL CONTROLS & CLASS CREATION
        ========================================================================= */
@@ -1070,6 +1154,9 @@
       document.getElementById('new-class-form').reset();
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('fc-start-date').value = today;
+      document.getElementById('fc-has-entry-test').checked = true;
+      document.getElementById('fc-has-final-test').checked = true;
+      document.getElementById('fc-has-final-report').checked = true;
       openModal('new-class-modal');
     }
 
@@ -1083,6 +1170,10 @@
       const scheduleText = document.getElementById('fc-schedule-text').value.trim();
       const startDate = document.getElementById('fc-start-date').value;
       const totalSessions = document.getElementById('fc-sessions-count').value;
+
+      const hasEntryTest = document.getElementById('fc-has-entry-test').checked;
+      const hasFinalTest = document.getElementById('fc-has-final-test').checked;
+      const hasFinalReport = document.getElementById('fc-has-final-report').checked;
 
       const checkedDays = Array.from(document.querySelectorAll('input[name="fc-days"]:checked')).map(cb => parseInt(cb.value));
       if (checkedDays.length === 0) {
@@ -1118,6 +1209,9 @@
           startDate: startDate,
           daysOfWeek: checkedDays,
           totalSessions: totalSessions,
+          hasEntryTest: hasEntryTest,
+          hasFinalTest: hasFinalTest,
+          hasFinalReport: hasFinalReport,
           students: students
         });
 
