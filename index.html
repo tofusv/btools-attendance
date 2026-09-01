@@ -1,1931 +1,2424 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบสร้างป้ายชื่ออัตโนมัติ (Name Tag Generator - A4 Landscape 9 Tags/Page)</title>
-    <!-- Google Fonts: Google Sans & Noto Sans Thai -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SheetJS for Excel Parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    
-    <style>
-        /* Modern Reset & Root Variables */
-        :root {
-            --bg-dark: #0f172a;
-            --sidebar-bg: #1e293b;
-            --card-bg: #334155;
-            --card-border: #475569;
-            --text-light: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #f37021;
-            --primary-hover: #d96611;
-            --success: #10b981;
-            --danger: #ef4444;
-            --border-radius: 8px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5);
-
-            /* A4 Dimensions (Landscape) */
-            --a4-width: 297mm;
-            --a4-height: 210mm;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Google Sans', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* App Container Layout */
-        .app-container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-            width: 440px;
-            background-color: var(--sidebar-bg);
-            border-right: 1px solid var(--card-border);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            z-index: 10;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .brand {
-            padding: 14px 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: rgba(15, 23, 42, 0.5);
-            border-bottom: 1px solid var(--card-border);
-        }
-
-        .brand-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .brand-icon {
-            font-size: 1.8rem;
-            color: #f37021;
-        }
-
-        .brand h2 {
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: var(--text-light);
-        }
-
-        .badge {
-            display: inline-block;
-            font-size: 0.75rem;
-            background: rgba(243, 112, 33, 0.2);
-            color: #f97316;
-            border: 1px solid rgba(243, 112, 33, 0.4);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 500;
-        }
-
-        .badge.info-badge {
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            border-color: rgba(16, 185, 129, 0.4);
-        }
-
-        .badge.admin-badge {
-            background: rgba(234, 179, 8, 0.2);
-            color: #facc15;
-            border-color: rgba(234, 179, 8, 0.4);
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            background-color: rgba(15, 23, 42, 0.6);
-            border-bottom: 1px solid var(--card-border);
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px 10px;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-family: inherit;
-            font-size: 0.88rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border-bottom: 2px solid transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .tab-btn:hover {
-            color: var(--text-light);
-            background-color: rgba(255, 255, 255, 0.03);
-        }
-
-        .tab-btn.active {
-            color: #f37021;
-            border-bottom-color: #f37021;
-            background-color: rgba(243, 112, 33, 0.08);
-        }
-
-        /* Tab Contents */
-        .tab-content {
-            display: none;
-            padding: 16px 20px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Section Title */
-        .section-title {
-            font-size: 0.88rem;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: 0.3px;
-            font-weight: 600;
-        }
-
-        /* Cards & Import Options */
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--border-radius);
-            margin-bottom: 12px;
-            overflow: hidden;
-        }
-
-        .card-header {
-            padding: 10px 14px;
-            background-color: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid var(--card-border);
-            font-size: 0.88rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .card-header-with-link {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .link-gsheet-template {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.72rem;
-            color: #4ade80;
-            background: rgba(34, 197, 94, 0.15);
-            border: 1px solid rgba(74, 222, 128, 0.35);
-            padding: 3px 8px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .link-gsheet-template:hover {
-            background: rgba(34, 197, 94, 0.28);
-            border-color: rgba(74, 222, 128, 0.65);
-            color: #86efac;
-            transform: translateY(-1px);
-        }
-
-        .color-gsheet { color: #34a853; }
-        .color-paste { color: #f59e0b; }
-        .color-excel { color: #10b981; }
-
-        .card-body {
-            padding: 12px 14px;
-        }
-
-        .help-text {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        input[type="password"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 8px 12px;
-            background-color: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--card-border);
-            border-radius: 6px;
-            color: var(--text-light);
-            font-family: inherit;
-            font-size: 0.85rem;
-            transition: border-color 0.2s ease;
-            margin-bottom: 8px;
-        }
-
-        input[type="text"]:focus,
-        input[type="number"]:focus,
-        input[type="password"]:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #f37021;
-        }
-
-        input[type="color"] {
-            width: 100%;
-            height: 36px;
-            border: 1px solid var(--card-border);
-            border-radius: 6px;
-            cursor: pointer;
-            background: none;
-        }
-
-        .dropzone {
-            border: 2px dashed var(--card-border);
-            border-radius: var(--border-radius);
-            padding: 16px;
-            text-align: center;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: var(--text-muted);
-            font-size: 0.82rem;
-            transition: all 0.2s ease;
-        }
-
-        .dropzone:hover {
-            border-color: #f37021;
-            color: var(--text-light);
-            background-color: rgba(243, 112, 33, 0.05);
-        }
-
-        .dropzone i {
-            font-size: 1.5rem;
-            color: #f37021;
-            margin-bottom: 4px;
-        }
-
-        /* Preset Box */
-        .preset-box {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        /* Data Table */
-        .data-table-container {
-            margin-top: 16px;
-        }
-
-        .table-header-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .table-header-bar h3 {
-            font-size: 0.95rem;
-            font-weight: 600;
-        }
-
-        .table-scroll {
-            max-height: 280px;
-            overflow-y: auto;
-            border: 1px solid var(--card-border);
-            border-radius: var(--border-radius);
-            background-color: var(--card-bg);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.82rem;
-        }
-
-        th {
-            background-color: rgba(15, 23, 42, 0.8);
-            color: var(--text-muted);
-            text-align: left;
-            padding: 8px 10px;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            border-bottom: 1px solid var(--card-border);
-        }
-
-        td {
-            padding: 8px 10px;
-            border-bottom: 1px solid rgba(71, 85, 105, 0.5);
-            color: var(--text-light);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 140px;
-        }
-
-        tr:hover td {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 8px 14px;
-            border-radius: 6px;
-            border: none;
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary {
-            background-color: #f37021;
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background-color: #d96611;
-        }
-
-        .btn-secondary {
-            background-color: #475569;
-            color: #fff;
-            width: 100%;
-        }
-
-        .btn-secondary:hover {
-            background-color: #334155;
-        }
-
-        .btn-outline {
-            background: none;
-            border: 1px solid var(--card-border);
-            color: var(--text-light);
-        }
-
-        .btn-outline:hover {
-            background-color: rgba(255, 255, 255, 0.08);
-        }
-
-        .btn-danger-outline {
-            background: none;
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            color: #fca5a5;
-        }
-
-        .btn-danger-outline:hover {
-            background-color: rgba(239, 68, 68, 0.15);
-        }
-
-        .btn-sm {
-            padding: 4px 8px;
-            font-size: 0.78rem;
-        }
-
-        .btn-lg {
-            padding: 12px 20px;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .btn-block {
-            width: 100%;
-        }
-
-        .btn-icon {
-            padding: 6px 10px;
-            background: none;
-            border: 1px solid var(--card-border);
-            color: var(--text-light);
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .btn-icon:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .btn-del {
-            color: #f87171;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9rem;
-            padding: 2px 6px;
-        }
-
-        .btn-del:hover {
-            color: #ef4444;
-        }
-
-        /* Control Groups in Design Tab */
-        .control-group {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--border-radius);
-            padding: 14px;
-            margin-bottom: 16px;
-        }
-
-        .control-group h3 {
-            font-size: 0.88rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #fb923c;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        .form-field {
-            flex: 1;
-            margin-bottom: 8px;
-        }
-
-        .form-field label {
-            display: block;
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-
-        .sidebar-footer {
-            padding: 14px 20px;
-            background-color: rgba(15, 23, 42, 0.8);
-            border-top: 1px solid var(--card-border);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .admin-footer-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* Preview Area */
-        .preview-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background-color: #0b0f19;
-            overflow: hidden;
-        }
-
-        .preview-toolbar {
-            height: 52px;
-            background-color: var(--sidebar-bg);
-            border-bottom: 1px solid var(--card-border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 5;
-        }
-
-        .toolbar-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 0.85rem;
-            color: var(--text-light);
-        }
-
-        .toolbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-        }
-
-        .paper-viewport {
-            flex: 1;
-            overflow: auto;
-            padding: 40px;
-            display: flex;
-            justify-content: center;
-            background-image: 
-                radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
-        .paper-container {
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-            align-items: center;
-            transform-origin: top center;
-            transition: transform 0.2s ease;
-        }
-
-        /* A4 Sheet (Landscape) */
-        .a4-sheet {
-            width: var(--a4-width);
-            height: var(--a4-height);
-            background-color: #ffffff;
-            color: #000000;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
-            padding: 5mm;
-            box-sizing: border-box;
-            position: relative;
-            page-break-after: always;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* 3x3 Grid Layout */
-        .tags-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 2mm;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Single Tag Component */
-        .name-tag {
-            position: relative;
-            box-sizing: border-box;
-            background-color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 6mm;
-            overflow: hidden;
-            font-family: 'Google Sans', 'Noto Sans Thai', sans-serif;
-        }
-
-        /* SVG Frame Overlay (Orange-Gray Angled Border) */
-        .tag-frame-svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        /* Tag Text Content Wrapper */
-        .tag-content {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-            padding: 5mm 8mm; /* Perfect Geometric Center */
-        }
-
-        /* Tag Cut Mark Styles */
-        .name-tag.cut-dashed {
-            border: 1px dashed #cbd5e1;
-        }
-
-        .name-tag.cut-solid {
-            border: 1px solid #94a3b8;
-        }
-
-        .name-tag.cut-none {
-            border: none;
-        }
-
-        .name-tag.cut-corners::before,
-        .name-tag.cut-corners::after {
-            content: '';
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            border-color: #94a3b8;
-            border-style: solid;
-            pointer-events: none;
-            z-index: 3;
-        }
-
-        .name-tag.cut-corners::before {
-            top: 0; left: 0;
-            border-width: 1px 0 0 1px;
-        }
-
-        .name-tag.cut-corners::after {
-            bottom: 0; right: 0;
-            border-width: 0 1px 1px 0;
-        }
-
-        /* Tag Logo Element & Positioning */
-        .tag-logo {
-            max-height: 12mm;
-            object-fit: contain;
-            margin-bottom: 3mm;
-            z-index: 2;
-        }
-
-        .tag-logo.top-right {
-            position: absolute;
-            top: 8.5mm;
-            right: 8.5mm;
-            max-height: 8.5mm;
-            z-index: 10;
-            margin-bottom: 0;
-        }
-
-        .tag-logo.top-left {
-            position: absolute;
-            top: 5mm;
-            left: 5mm;
-            margin-bottom: 0;
-        }
-
-        .tag-logo.top-center {
-            margin-bottom: 3mm;
-        }
-
-        .tag-logo.watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            max-height: 60%;
-            opacity: 0.08;
-            pointer-events: none;
-            margin: 0;
-        }
-
-        /* Tag Typography Elements (Perfect Centering) */
-        .tag-name {
-            font-size: 52pt;
-            font-weight: 600;
-            color: #1e293b;
-            line-height: 1.2;
-            margin-bottom: 2mm;
-            white-space: nowrap;
-            text-align: center;
-            max-width: 100%;
-            overflow: visible;
-        }
-
-        .tag-name:last-child {
-            margin-bottom: 0; /* When no position, name is in exact dead center */
-        }
-
-        .tag-position {
-            font-size: 14pt;
-            font-weight: 400;
-            color: #475569;
-            line-height: 1.25;
-            margin-bottom: 0;
-            white-space: nowrap;
-            text-align: center;
-            max-width: 100%;
-            overflow: visible;
-        }
-
-        /* Modals */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background-color: var(--sidebar-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--border-radius);
-            width: 420px;
-            max-width: 90%;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .modal-header {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--card-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h3 {
-            font-size: 1rem;
-        }
-
-        .close-modal {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.4rem;
-            cursor: pointer;
-        }
-
-        .modal-body {
-            padding: 18px;
-        }
-
-        .modal-footer {
-            padding: 12px 18px;
-            border-top: 1px solid var(--card-border);
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-
-        /* PRINT STYLES ENGINE */
-        @media print {
-            @page {
-                size: A4 landscape;
-                margin: 0;
-            }
-
-            html, body {
-                background: #ffffff !important;
-                color: #000000 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 297mm !important;
-                height: 210mm !important;
-                overflow: visible !important;
-            }
-
-            .app-container {
-                display: block !important;
-                height: auto !important;
-                width: auto !important;
-            }
-
-            .sidebar,
-            .preview-toolbar,
-            .modal {
-                display: none !important;
-            }
-
-            .preview-area {
-                background: transparent !important;
-                overflow: visible !important;
-                display: block !important;
-            }
-
-            .paper-viewport {
-                padding: 0 !important;
-                overflow: visible !important;
-                background: none !important;
-                display: block !important;
-            }
-
-            .paper-container {
-                transform: scale(1) !important;
-                gap: 0 !important;
-                display: block !important;
-            }
-
-            .a4-sheet {
-                box-shadow: none !important;
-                margin: 0 !important;
-                width: 297mm !important;
-                height: 210mm !important;
-                page-break-after: always !important;
-                page-break-inside: avoid !important;
-                box-sizing: border-box !important;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ระบบเช็คชื่อเข้าเรียน - B Tools Training</title>
+
+  <!-- 
+  =============================================================================
+  ⚙️ CONFIGURATION: วางลิงก์ GOOGLE APPS SCRIPT WEB APP ที่นี่ (บรรทัดนี้ได้เลย!)
+  =============================================================================
+  -->
+  <script>
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR_DwzCJHTNOWe2e-PBebQn87BD7jyu6w9pjlkCFNDCCt3l8LtkG9S5wK888rfC301Ig/exec";
+  </script>
+  <!-- ============================================================================= -->
+  
+  <!-- Official Google Fonts: Sarabun (รองรับภาษาไทย 100% มีหัว อ่านง่าย สบายตา) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  
+  <style>
+    *, *::before, *::after, html, body, button, input, select, textarea, span, div, h1, h2, h3, p, a, label, b, strong {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #E65100;
+      --primary-light: #FFF3E0;
+      --primary-dark: #BF360C;
+      --success: #2E7D32;
+      --success-light: #E8F5E9;
+      --danger: #C62828;
+      --danger-light: #FFEBEE;
+      --text-main: #202124;
+      --text-muted: #5F6368;
+      --bg: #F8F9FA;
+      --card-bg: #FFFFFF;
+      --border-color: #E0E0E0;
+      --radius: 18px;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 6px 12px 60px 12px;
+      max-width: 520px;
+      margin: 0 auto;
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* HEADER CARD WITH LOGO & TOP-RIGHT HR BUTTON */
+    .header-card {
+      background: linear-gradient(135deg, #FF6F00 0%, #E65100 100%);
+      color: white;
+      padding: 16px 18px;
+      border-radius: var(--radius);
+      box-shadow: 0 6px 18px rgba(230, 81, 0, 0.22);
+      margin-bottom: 12px;
+    }
+
+    .header-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .brand-logo-box {
+      background: white;
+      padding: 5px 12px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .header-logo-img {
+      height: 24px;
+      width: auto;
+      display: block;
+    }
+
+    /* TOP RIGHT HR TOGGLE BUTTON */
+    .btn-hr-toggle {
+      background: rgba(255, 255, 255, 0.22);
+      color: white;
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      backdrop-filter: blur(4px);
+      transition: all 0.2s ease;
+    }
+
+    .btn-hr-toggle:active {
+      transform: scale(0.95);
+      background: white;
+      color: var(--primary);
+    }
+
+    .course-title {
+      font-size: 1.18rem;
+      font-weight: 700;
+      line-height: 1.38;
+      margin-bottom: 6px;
+    }
+
+    .course-meta {
+      font-size: 0.9rem;
+      opacity: 0.95;
+      line-height: 1.55;
+    }
+
+    /* PERSONALIZED USER CARD */
+    .personal-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+      border: 2px solid var(--primary-light);
+      position: relative;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Top-Right Status Badge inside Name Card */
+    .card-status-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #F1F8E9;
+      color: #2E7D32;
+      border: 1px solid #C8E6C9;
+    }
+
+    .card-status-badge.syncing {
+      background: #FFF3E0;
+      color: #E65100;
+      border-color: #FFE082;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      display: inline-block;
+    }
+
+    .status-dot.pulse {
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.8); opacity: 0.5; }
+    }
+
+    .personal-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    /* Clean User Avatar UI */
+    .personal-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 2px solid rgba(230, 81, 0, 0.15);
+    }
+
+    .personal-avatar svg {
+      width: 28px;
+      height: 28px;
+      fill: var(--primary);
+    }
+
+    .personal-info {
+      flex: 1;
+      padding-right: 60px; /* space for top-right status badge */
+    }
+
+    .personal-greeting {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .personal-name {
+      font-size: 1.28rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .personal-dept {
+      font-size: 0.85rem;
+      color: #616161;
+      margin-top: 2px;
+    }
+
+    /* Check-in Action Button */
+    .btn-personal-checkin {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 1.08rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(230, 81, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-personal-checkin:active {
+      transform: scale(0.98);
+      background: var(--primary-dark);
+    }
+
+    .checked-success-box {
+      background: #E8F5E9;
+      border: 1.5px solid #A5D6A7;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      color: var(--success);
+    }
+
+    .checked-success-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .checked-success-time {
+      font-size: 0.9rem;
+      color: #558B2F;
+      margin-bottom: 10px;
+    }
+
+    .btn-undo-checkin {
+      background: white;
+      color: var(--danger);
+      border: 1.5px solid #EF9A9A;
+      padding: 7px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .btn-undo-checkin:hover {
+      background: var(--danger-light);
+    }
+
+    .personal-card-footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed #E0E0E0;
+    }
+
+    .switch-user-btn {
+      background: none;
+      border: none;
+      font-size: 0.85rem;
+      color: #757575;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      text-decoration: underline;
+    }
+
+    .switch-user-btn:hover {
+      color: var(--primary);
+    }
+
+    /* Session Banner Card */
+    .session-card {
+      background: var(--card-bg);
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .session-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .session-date-badge {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .progress-wrapper {
+      margin-top: 6px;
+    }
+
+    .progress-bar-bg {
+      background: #EEEEEE;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #4CAF50, #2E7D32);
+      height: 100%;
+      width: 0%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    /* Notice */
+    .notice-box {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .notice-warning {
+      background: #FFF3E0;
+      border: 1.5px solid #FFE082;
+      color: #E65100;
+    }
+
+    /* Section Title */
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 16px 4px 10px 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .refresh-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+
+    /* Student List */
+    .student-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .student-card {
+      background: var(--card-bg);
+      border: 1.5px solid #EEEEEE;
+      border-radius: var(--radius);
+      padding: 13px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      transition: all 0.2s ease;
+    }
+
+    .student-card.clickable {
+      cursor: pointer;
+    }
+
+    .student-card.clickable:active {
+      transform: scale(0.98);
+      border-color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    .student-card.disabled {
+      cursor: default;
+      opacity: 0.88;
+    }
+
+    .student-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    /* Clean Minimalist User Icon */
+    .student-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #F0F0F0;
+      color: #757575;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .student-avatar svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .student-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .student-nickname {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .student-index-tag {
+      font-size: 0.72rem;
+      color: #9E9E9E;
+      font-weight: 600;
+    }
+
+    .student-name {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .student-dept {
+      font-size: 0.76rem;
+      color: #757575;
+      margin-top: 2px;
+    }
+
+    /* Short English 'Select' Button */
+    .btn-checkin {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      box-shadow: 0 3px 8px rgba(230, 81, 0, 0.25);
+      pointer-events: none;
+    }
+
+    .student-card.checked {
+      background-color: #F1F8E9;
+      border-color: #A5D6A7;
+      cursor: default;
+      opacity: 1 !important;
+    }
+
+    .student-card.checked .student-avatar {
+      background: #C8E6C9;
+      color: var(--success);
+    }
+
+    .checked-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      color: var(--success);
+    }
+
+    .checked-label {
+      font-size: 0.92rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .checked-time {
+      font-size: 0.8rem;
+      color: #558B2F;
+      font-weight: 600;
+      margin-top: 1px;
+    }
+
+    /* HR DASHBOARD VIEW STYLES */
+    .hr-control-card {
+      background: white;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+    }
+
+    .hr-emergency-card {
+      background: #FFF3E0;
+      border: 2px dashed #FF9800;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .btn-hr-emergency-unlock {
+      width: 100%;
+      background: #E65100;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      box-shadow: 0 3px 10px rgba(230, 81, 0, 0.3);
+      transition: all 0.2s;
+    }
+
+    .btn-hr-emergency-unlock:active {
+      transform: scale(0.98);
+      background: #BF360C;
+    }
+
+    .hr-control-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .hr-session-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+      background: #FAFAFA;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .hr-session-select:focus {
+      border-color: var(--primary);
+      background: white;
+    }
+
+    .hr-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .hr-stat-box {
+      background: white;
+      padding: 14px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hr-stat-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .hr-stat-value {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .hr-stat-sub {
+      font-size: 0.76rem;
+      color: #757575;
+    }
+
+    .hr-action-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .btn-hr-line-copy {
+      flex: 1;
+      background: #06C755;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(6, 199, 85, 0.25);
+      transition: all 0.2s;
+    }
+
+    .btn-hr-line-copy:active {
+      transform: scale(0.97);
+    }
+
+    /* Filter Tabs */
+    .hr-tabs-wrapper {
+      display: flex;
+      background: #EEEEEE;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      gap: 4px;
+    }
+
+    .hr-tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 8px 6px;
+      border-radius: 9px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: #616161;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .hr-tab-btn.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      font-weight: 700;
+    }
+
+    /* Mini Progress Bar */
+    .mini-progress-bg {
+      background: #EEEEEE;
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+      width: 100%;
+    }
+
+    .mini-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: #4CAF50;
+      transition: width 0.3s;
+    }
+
+    /* PIN CODE MODAL */
+    .pin-input-field {
+      width: 160px;
+      height: 48px;
+      font-size: 1.6rem;
+      letter-spacing: 12px;
+      text-align: center;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      margin: 12px auto;
+      display: block;
+      outline: none;
+      background: #F9F9F9;
+    }
+
+    .pin-input-field:focus {
+      border-color: var(--primary);
+      background: white;
+    }
+
+    .pin-error-msg {
+      color: var(--danger);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* Loading Overlay (Only for Explicit Actions like PIN or Button Click) */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.85);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+    }
+
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border: 4px solid #FFE0B2;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-bottom: 8px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Modal Dialog */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 22px;
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px auto;
+    }
+
+    .modal-avatar svg {
+      width: 30px;
+      height: 30px;
+      fill: var(--primary);
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .modal-warning-text {
+      background: #FFF3E0;
+      color: #D84315;
+      font-size: 0.82rem;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-modal {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.98rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      background: #EEEEEE;
+      color: #616161;
+    }
+
+    .btn-confirm {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #2E7D32;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
 </head>
 <body>
-    <!-- Main App Layout (Hidden during print) -->
-    <div class="app-container">
-        <!-- Sidebar Controls -->
-        <aside class="sidebar">
-            <div class="brand">
-                <div class="brand-left">
-                    <i class="fa-solid fa-id-badge brand-icon"></i>
-                    <div>
-                        <h2>ระบบสร้างป้ายชื่อ</h2>
-                        <span class="badge">9 ป้าย / A4 แนวนอน (9.8x6 ซม.)</span>
-                    </div>
-                </div>
-                <div id="admin-status-badge" style="display: none;">
-                    <span class="badge admin-badge"><i class="fa-solid fa-crown"></i> Admin</span>
-                </div>
-            </div>
 
-            <!-- Tabs Navigation -->
-            <nav class="tabs">
-                <button class="tab-btn active" data-tab="data-tab">
-                    <i class="fa-solid fa-users"></i> ข้อมูลรายชื่อ (<span id="name-count">0</span>)
-                </button>
-                <button class="tab-btn" data-tab="design-tab" id="tab-design-btn" style="display: none;">
-                    <i class="fa-solid fa-sliders"></i> ปรับแต่งดีไซน์ (Admin)
-                </button>
-            </nav>
+  <!-- Loading State (For Modal Actions) -->
+  <div id="loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loading-text" style="font-weight: 500; color: #555; font-size: 0.9rem;">กำลังบันทึกข้อมูล...</div>
+  </div>
 
-            <!-- TAB 1: Data Input (User Mode) -->
-            <div id="data-tab" class="tab-content active">
-                <div class="section-title">
-                    <i class="fa-solid fa-file-import"></i> วิธีนำเข้าข้อมูล (2 คอลัมน์: ชื่อ และ ตำแหน่ง)
-                </div>
-
-                <!-- Input Methods Accordion / Options -->
-                <div class="import-options">
-                    <!-- Method 1: Google Sheet -->
-                    <div class="card">
-                        <div class="card-header card-header-with-link">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-brands fa-google-drive color-gsheet"></i>
-                                <span>ดึงข้อมูลจาก Google Sheet</span>
-                            </div>
-                            <a href="https://docs.google.com/spreadsheets/d/19GPxDwmsRHbrSKasylxpty17LeMX4F7riYSq044pRco/edit?usp=drive_link" target="_blank" rel="noopener noreferrer" class="link-gsheet-template" title="คลิกเพื่อเปิดไฟล์ Google Sheet ต้นแบบ">
-                                <i class="fa-solid fa-table"></i> เปิดชีตต้นแบบ <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.65rem;"></i>
-                            </a>
-                        </div>
-                        <div class="card-body">
-                            <p class="help-text">วางลิงก์ Google Sheet ที่แชร์สาธารณะ (คอลัมน์ A = ชื่อ, คอลัมน์ B = ตำแหน่ง)</p>
-                            <input type="text" id="gsheet-url" value="https://docs.google.com/spreadsheets/d/19GPxDwmsRHbrSKasylxpty17LeMX4F7riYSq044pRco/edit?usp=drive_link" placeholder="https://docs.google.com/spreadsheets/d/...">
-                            <button id="btn-fetch-gsheet" class="btn btn-secondary">
-                                <i class="fa-solid fa-cloud-arrow-down"></i> ดึงข้อมูล
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Method 2: Copy Paste -->
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fa-solid fa-paste color-paste"></i>
-                            <span>คัดลอกมาวาง (Copy-Paste)</span>
-                        </div>
-                        <div class="card-body">
-                            <p class="help-text">คัดลอก 2 คอลัมน์จาก Excel มาวางได้เลย (ชื่อ [Tab] ตำแหน่ง)</p>
-                            <textarea id="paste-input" rows="3" placeholder="นายสมชาย ใจดี&#9;ผู้จัดการ&#nนางสาวสมศรี มีสุข&#9;นักวิเคราะห์"></textarea>
-                            <button id="btn-process-paste" class="btn btn-secondary">
-                                <i class="fa-solid fa-check"></i> ใช้งานข้อมูลที่วาง
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Method 3: File Upload -->
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fa-solid fa-file-excel color-excel"></i>
-                            <span>อัปโหลดไฟล์ Excel / CSV</span>
-                        </div>
-                        <div class="card-body">
-                            <input type="file" id="file-upload" accept=".xlsx, .xls, .csv" hidden>
-                            <label for="file-upload" class="dropzone" id="dropzone">
-                                <i class="fa-solid fa-cloud-arrow-up"></i>
-                                <span>เลือกไฟล์ Excel/CSV (2 คอลัมน์)</span>
-                                <small>(.xlsx, .xls, .csv)</small>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Clear Data Action -->
-                    <div class="preset-box">
-                        <button id="btn-clear-data" class="btn btn-danger-outline btn-block">
-                            <i class="fa-solid fa-trash-can"></i> ล้างข้อมูลทั้งหมด
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Data Table List (2 Columns: Name & Position) -->
-                <div class="data-table-container">
-                    <div class="table-header-bar">
-                        <h3><i class="fa-solid fa-list-check"></i> รายการป้ายชื่อที่จะพิมพ์</h3>
-                        <button id="btn-add-person" class="btn btn-sm btn-primary">
-                            <i class="fa-solid fa-plus"></i> เพิ่มรายชื่อ
-                        </button>
-                    </div>
-                    <div class="table-scroll">
-                        <table id="names-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 40px;">#</th>
-                                    <th>ชื่อ - นามสกุล</th>
-                                    <th>ตำแหน่ง</th>
-                                    <th style="width: 50px;">ลบ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="names-tbody">
-                                <!-- Data rows inserted dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 2: Design & Size Customization (Admin Mode Only) -->
-            <div id="design-tab" class="tab-content">
-                <!-- Size & Page Settings -->
-                <div class="control-group">
-                    <h3><i class="fa-solid fa-ruler-combined"></i> ปรับขนาดป้าย & ระยะกระดาษ</h3>
-                    
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="tag-width">ความกว้างป้าย (ซม.)</label>
-                            <input type="number" id="tag-width" value="9.8" step="0.1" min="4" max="15">
-                        </div>
-                        <div class="form-field">
-                            <label for="tag-height">ความสูงป้าย (ซม.)</label>
-                            <input type="number" id="tag-height" value="6.0" step="0.1" min="3" max="12">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="page-padding">ระยะขอบกระดาษ A4 (มม.)</label>
-                            <input type="number" id="page-padding" value="5" step="1" min="0" max="25">
-                        </div>
-                        <div class="form-field">
-                            <label for="grid-gap">ระยะห่างระหว่างป้าย (มม.)</label>
-                            <input type="number" id="grid-gap" value="2" step="0.5" min="0" max="15">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="tag-padding">ระยะขอบภายในป้าย (มม.)</label>
-                            <input type="number" id="tag-padding" value="6" step="1" min="0" max="20">
-                        </div>
-                        <div class="form-field">
-                            <label for="cut-lines-toggle">เส้นประสำหรับตัด/พับ</label>
-                            <select id="cut-lines-toggle">
-                                <option value="dashed">เส้นประ (Dashed)</option>
-                                <option value="solid">เส้นทึบบาง (Thin Solid)</option>
-                                <option value="corners">เครื่องหมายมุม (Crop Marks)</option>
-                                <option value="none" selected>ไม่มีเส้น (None)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Font & Text Settings (Admin) -->
-                <div class="control-group">
-                    <h3><i class="fa-solid fa-font"></i> รูปแบบตัวอักษร</h3>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="name-size">ขนาดชื่อเริ่มต้น (pt)</label>
-                            <input type="number" id="name-size" value="52" min="12" max="72">
-                        </div>
-                        <div class="form-field">
-                            <label for="position-size">ขนาดตำแหน่ง (pt)</label>
-                            <input type="number" id="position-size" value="14" min="8" max="28">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Logo Settings (Admin) -->
-                <div class="control-group">
-                    <h3><i class="fa-solid fa-image"></i> โลโก้ / ตราสัญลักษณ์</h3>
-                    <div class="form-field">
-                        <label for="logo-upload">เปลี่ยนภาพโลโก้</label>
-                        <input type="file" id="logo-upload" accept="image/*">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="logo-position">ตำแหน่งโลโก้</label>
-                            <select id="logo-position">
-                                <option value="top-right" selected>มุมขวาบน (Top Right)</option>
-                                <option value="top-center">บนกึ่งกลาง</option>
-                                <option value="top-left">มุมซ้ายบน</option>
-                                <option value="none">ไม่แสดงโลโก้</option>
-                            </select>
-                        </div>
-                        <div class="form-field">
-                            <label for="logo-height">ความสูงโลโก้ (มม.)</label>
-                            <input type="number" id="logo-height" value="8.5" step="0.5" min="4" max="30">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Reset to Defaults Button (Admin) -->
-                <div style="margin-top: 14px; margin-bottom: 14px;">
-                    <button id="btn-reset-settings" class="btn btn-outline btn-block">
-                        <i class="fa-solid fa-rotate-left"></i> คืนค่าเริ่มต้นของระบบ (Reset Default)
-                    </button>
-                </div>
-
-                <!-- Hidden inputs to preserve default configuration -->
-                <div style="display: none;">
-                    <select id="theme-preset"><option value="orange-gray-frame" selected></option></select>
-                    <input type="color" id="color-accent" value="#f37021">
-                    <input type="color" id="color-dept" value="#615e5b">
-                    <input type="color" id="color-name" value="#1e293b">
-                    <input type="color" id="color-position" value="#475569">
-                    <input type="color" id="color-bg" value="#ffffff">
-                    <select id="accent-style"><option value="custom-frame" selected></option></select>
-                    <select id="font-family"><option value="'Google Sans', 'Noto Sans Thai', sans-serif" selected></option></select>
-                    <select id="name-weight"><option value="600" selected></option></select>
-                    <select id="text-align"><option value="center" selected></option></select>
-                </div>
-            </div>
-
-            <!-- Print Action & Admin Footer -->
-            <div class="sidebar-footer">
-                <button id="btn-print" class="btn btn-primary btn-lg btn-block">
-                    <i class="fa-solid fa-print"></i> พิมพ์ / สั่งทำ PDF
-                </button>
-                <div class="admin-footer-bar">
-                    <button id="btn-admin-auth" class="btn btn-sm btn-outline">
-                        <i class="fa-solid fa-lock"></i> เข้าสู่ระบบ Admin
-                    </button>
-                    <small style="color: var(--text-muted); font-size: 0.72rem;">ระบบสร้างป้ายชื่อ A4</small>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Preview Area -->
-        <main class="preview-area">
-            <!-- Top Toolbar -->
-            <header class="preview-toolbar">
-                <div class="toolbar-info">
-                    <i class="fa-solid fa-eye"></i>
-                    <span>แสดงตัวอย่างหน้าพิมพ์จริง A4 แนวนอน (9 ป้าย/หน้า | 9.8x6 ซม.)</span>
-                    <span class="badge info-badge" id="page-summary">0 หน้า | 0 คน</span>
-                </div>
-                <div class="toolbar-actions">
-                    <button id="btn-zoom-out" class="btn btn-icon" title="ย่อ"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
-                    <span id="zoom-level">100%</span>
-                    <button id="btn-zoom-in" class="btn btn-icon" title="ขยาย"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
-                    <button id="btn-zoom-reset" class="btn btn-sm btn-outline">100%</button>
-                </div>
-            </header>
-
-            <!-- Scrollable Viewport for A4 Pages -->
-            <div class="paper-viewport" id="paper-viewport">
-                <div class="paper-container" id="paper-container">
-                    <!-- A4 Sheet Pages generated here dynamically -->
-                </div>
-            </div>
-        </main>
+  <!-- NO CLASS ACCESS VIEW -->
+  <div id="no-class-view" style="display: none;">
+    <div style="background: white; padding: 30px 20px; border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; margin-top: 30px;">
+      <div style="font-size: 3rem; margin-bottom: 12px;">📱</div>
+      <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 8px;">กรุณาสแกน QR Code ประจำคลาส</div>
+      <div style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.5;">
+        ระบบเปิดให้เข้าดูผ่านการสแกน <b>QR Code ประจำคลาสเรียน</b> ของคุณเท่านั้น เพื่อความปลอดภัยของข้อมูล
+      </div>
     </div>
+  </div>
 
-    <!-- Modal: Add / Edit Single Person -->
-    <div id="modal-person" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title">เพิ่มรายชื่อ</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="edit-index" value="-1">
-                <div class="form-field">
-                    <label for="edit-name">ชื่อ - นามสกุล *</label>
-                    <input type="text" id="edit-name" placeholder="นายสมชาย ใจดี">
-                </div>
-                <div class="form-field">
-                    <label for="edit-position">ตำแหน่ง</label>
-                    <input type="text" id="edit-position" placeholder="นักวิเคราะห์ระบบชำนาญการ">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline close-modal">ยกเลิก</button>
-                <button id="btn-save-person" class="btn btn-primary">บันทึก</button>
-            </div>
+  <!-- MAIN CLASS VIEW -->
+  <div id="class-view" style="display: block;">
+    
+    <!-- Header Card -->
+    <header class="header-card">
+      <div class="header-top-row">
+        <div class="brand-logo-box">
+          <img src="https://iili.io/CLrwrGa.png" alt="B Tools Training" class="header-logo-img">
         </div>
-    </div>
+        <button id="btn-toggle-role" class="btn-hr-toggle" onclick="handleRoleToggleClick()">
+          🔒 HR / Instructor
+        </button>
+      </div>
+      
+      <h1 class="course-title" id="course-name">B Tools Training</h1>
+      <div class="course-meta">
+        <div>🏢 <span id="company-name">-</span> (<span id="class-duration">-</span>)</div>
+        <div>⏰ <span id="schedule-text">-</span></div>
+      </div>
+    </header>
 
-    <!-- Modal: Admin Password Login (PIN: 0000) -->
-    <div id="modal-admin" class="modal">
-        <div class="modal-content" style="width: 360px;">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-shield-halved" style="color: #f37021;"></i> เข้าสู่ระบบ Admin</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="help-text" style="margin-bottom: 12px;">กรุณากรอกรหัสผ่านเพื่อปลดล็อกโหมดตั้งค่าดีไซน์และขนาด</p>
-                <div class="form-field">
-                    <label for="admin-pin">รหัสผ่าน Admin</label>
-                    <input type="password" id="admin-pin" placeholder="กรอกรหัสผ่าน 4 หลัก" maxlength="20">
-                </div>
-                <div id="admin-error-msg" style="color: #f87171; font-size: 0.8rem; display: none; margin-top: 4px;">
-                    <i class="fa-solid fa-circle-exclamation"></i> รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline close-modal">ยกเลิก</button>
-                <button id="btn-submit-admin" class="btn btn-primary">เข้าสู่ระบบ</button>
-            </div>
+    <!-- VIEW 1: STUDENT CHECK-IN SECTION (DEFAULT) -->
+    <div id="student-view-section">
+      <!-- PERSONALIZED USER CARD -->
+      <div id="personal-card-container"></div>
+
+      <!-- Session Info Card -->
+      <section class="session-card">
+        <div class="session-title-row">
+          <span>รอบการเรียนประจำวันนี้</span>
+          <span id="stat-text" style="color: var(--primary);">กำลังตรวจสอบ...</span>
         </div>
+        <div class="session-date-badge" id="session-display-badge">
+          📅 กำลังตรวจสอบวันที่...
+        </div>
+        <div class="progress-wrapper">
+          <div class="progress-bar-bg">
+            <div id="progress-bar" class="progress-bar-fill"></div>
+          </div>
+        </div>
+
+        <!-- 📅 Next Upcoming Class Badge / Timeline Box -->
+        <div id="next-class-banner" style="margin-top: 10px; background: #F8F9FA; border: 1.5px solid #E0E0E0; border-radius: 12px; padding: 9px 12px; display: none; align-items: center; justify-content: space-between; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.25rem;">📅</span>
+            <div>
+              <div style="font-size: 0.72rem; color: #757575; font-weight: 600;">วันที่มีเรียนครั้งต่อไป (Next Class)</div>
+              <div id="next-class-date-text" style="font-size: 0.92rem; font-weight: 800; color: #1565C0;">-</div>
+            </div>
+          </div>
+          <div id="next-class-session-badge" style="background: #E3F2FD; color: #0D47A1; font-weight: 700; font-size: 0.76rem; padding: 3px 10px; border-radius: 10px; white-space: nowrap; border: 1px solid #BBDEFB;">
+            -
+          </div>
+        </div>
+      </section>
+
+      <!-- Notice Container -->
+      <div id="notice-container"></div>
+
+      <!-- Student List Header -->
+      <div class="section-title">
+        <span id="list-header-title">รายชื่อผู้เข้าร่วมการอบรม 👇</span>
+        <button class="refresh-btn" onclick="refreshCurrentClass()">🔄 รีเฟรช</button>
+      </div>
+
+      <!-- Student Cards Container -->
+      <main id="student-list" class="student-list">
+        <!-- Populated via JS -->
+      </main>
     </div>
 
-    <script>
-        /**
-         * System Name: Name Tag Generator (All-in-One Standalone)
-         * Features: Google Sans, Canvas 2D Text Auto-Fit, 9.8x6cm Vector Frame, Admin PIN (0000)
-         */
-        document.addEventListener('DOMContentLoaded', () => {
-            // Embedded Base64 Logo (Tools Training)
-            const embeddedLogoDataUrl = 'data:image/png;base64,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';
-
-            // --- APP STATE ---
-            let people = [];
-            let currentZoom = 1.0;
-            let isAdmin = sessionStorage.getItem('nametag_admin_auth') === 'true';
-
-            const defaultSettings = {
-                tagWidth: 9.8,      // cm
-                tagHeight: 6.0,     // cm
-                pagePadding: 5,     // mm
-                gridGap: 2,         // mm
-                tagPadding: 6,      // mm
-                cutLines: 'none',   // dashed, solid, corners, none
-                fontFamily: "'Google Sans', 'Noto Sans Thai', sans-serif",
-                nameSize: 52,       // pt
-                nameWeight: '600',
-                positionSize: 14,   // pt
-                deptSize: 12,       // pt
-                textAlign: 'center',
-                themePreset: 'orange-gray-frame',
-                colorName: '#1e293b',
-                colorPosition: '#475569',
-                colorDept: '#f37021',
-                colorAccent: '#f37021', // Orange #f37021
-                colorBorderGray: '#615e5b', // Dark Gray #615e5b
-                colorBg: '#ffffff',
-                accentStyle: 'custom-frame',
-                logoUrl: embeddedLogoDataUrl,
-                logoPosition: 'top-right',
-                logoHeight: 8.5     // mm
-            };
-
-            let settings = Object.assign({}, defaultSettings);
-
-            function loadSettingsFromStorage() {
-                try {
-                    const saved = localStorage.getItem('nametag_custom_settings');
-                    if (saved) {
-                        const parsed = JSON.parse(saved);
-                        settings = Object.assign({}, defaultSettings, parsed);
-                    }
-                } catch (e) {
-                    console.error('Error loading settings from localStorage', e);
-                }
-                syncUIWithSettings();
-            }
-
-            function saveSettingsToStorage() {
-                try {
-                    localStorage.setItem('nametag_custom_settings', JSON.stringify(settings));
-                } catch (e) {
-                    console.error('Error saving settings to localStorage', e);
-                }
-            }
-
-            function syncUIWithSettings() {
-                const map = {
-                    'tag-width': settings.tagWidth,
-                    'tag-height': settings.tagHeight,
-                    'page-padding': settings.pagePadding,
-                    'grid-gap': settings.gridGap,
-                    'tag-padding': settings.tagPadding,
-                    'cut-lines-toggle': settings.cutLines,
-                    'name-size': settings.nameSize,
-                    'position-size': settings.positionSize,
-                    'logo-position': settings.logoPosition,
-                    'logo-height': settings.logoHeight
-                };
-
-                for (const [id, val] of Object.entries(map)) {
-                    const el = document.getElementById(id);
-                    if (el && val !== undefined) el.value = val;
-                }
-            }
-
-            function resetSettings() {
-                if (confirm('คุณต้องการคืนค่าการตั้งค่าขนาดและดีไซน์ทั้งหมดกลับเป็นค่าเริ่มต้นใช่หรือไม่?')) {
-                    localStorage.removeItem('nametag_custom_settings');
-                    settings = Object.assign({}, defaultSettings);
-                    syncUIWithSettings();
-                    renderPreview();
-                    alert('คืนค่าเริ่มต้นเรียบร้อยแล้ว!');
-                }
-            }
-
-            // Off-screen Exact Text Width Measurement Helper
-            function getExactTextWidth(text, font) {
-                let canvas = getExactTextWidth.canvas || (getExactTextWidth.canvas = document.createElement("canvas"));
-                let context = canvas.getContext("2d");
-                context.font = font;
-                return context.measureText(text).width;
-            }
-
-            // --- INITIALIZATION ---
-            function init() {
-                loadSettingsFromStorage();
-                setupEventListeners();
-                updateAdminUI();
-                renderDataTable();
-                renderPreview();
-            }
-
-            // --- ADMIN AUTH MANAGEMENT (PIN: 0000) ---
-            function updateAdminUI() {
-                const tabDesignBtn = document.getElementById('tab-design-btn');
-                const adminStatusBadge = document.getElementById('admin-status-badge');
-                const btnAdminAuth = document.getElementById('btn-admin-auth');
-
-                if (isAdmin) {
-                    tabDesignBtn.style.display = 'flex';
-                    adminStatusBadge.style.display = 'block';
-                    btnAdminAuth.innerHTML = '<i class="fa-solid fa-lock-open"></i> ออกจากระบบ Admin';
-                    btnAdminAuth.className = 'btn btn-sm btn-danger-outline';
-                } else {
-                    tabDesignBtn.style.display = 'none';
-                    adminStatusBadge.style.display = 'none';
-                    btnAdminAuth.innerHTML = '<i class="fa-solid fa-lock"></i> เข้าสู่ระบบ Admin';
-                    btnAdminAuth.className = 'btn btn-sm btn-outline';
-
-                    // If design tab was active, switch back to data tab
-                    if (tabDesignBtn.classList.contains('active')) {
-                        document.querySelector('.tab-btn[data-tab="data-tab"]').click();
-                    }
-                }
-            }
-
-            function openAdminModal() {
-                const modal = document.getElementById('modal-admin');
-                const pinInput = document.getElementById('admin-pin');
-                const errorMsg = document.getElementById('admin-error-msg');
-                pinInput.value = '';
-                errorMsg.style.display = 'none';
-                modal.classList.add('active');
-                pinInput.focus();
-            }
-
-            function handleAdminLogin() {
-                const pin = document.getElementById('admin-pin').value.trim();
-                const errorMsg = document.getElementById('admin-error-msg');
-
-                if (pin === '0000') {
-                    isAdmin = true;
-                    sessionStorage.setItem('nametag_admin_auth', 'true');
-                    updateAdminUI();
-                    document.getElementById('modal-admin').classList.remove('active');
-                    // Automatically switch to Admin design tab
-                    document.getElementById('tab-design-btn').click();
-                } else {
-                    errorMsg.style.display = 'block';
-                }
-            }
-
-            function handleAdminLogout() {
-                if (confirm('ต้องการออกจากโหมดผู้ดูแล (Admin) ใช่หรือไม่?')) {
-                    isAdmin = false;
-                    sessionStorage.removeItem('nametag_admin_auth');
-                    updateAdminUI();
-                }
-            }
-
-            // --- EVENT LISTENERS ---
-            function setupEventListeners() {
-                // Sidebar Tabs
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                        
-                        btn.classList.add('active');
-                        const targetTab = btn.getAttribute('data-tab');
-                        document.getElementById(targetTab).classList.add('active');
-                    });
-                });
-
-                // Admin Auth Actions
-                document.getElementById('btn-admin-auth').addEventListener('click', () => {
-                    if (isAdmin) {
-                        handleAdminLogout();
-                    } else {
-                        openAdminModal();
-                    }
-                });
-
-                document.getElementById('btn-submit-admin').addEventListener('click', handleAdminLogin);
-                document.getElementById('admin-pin').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') handleAdminLogin();
-                });
-
-                // Clear Data
-                const btnClear = document.getElementById('btn-clear-data');
-                if (btnClear) btnClear.addEventListener('click', clearData);
-
-                // Fetch Google Sheet
-                document.getElementById('btn-fetch-gsheet').addEventListener('click', fetchGoogleSheet);
-
-                // Copy-Paste Data
-                document.getElementById('btn-process-paste').addEventListener('click', processPasteInput);
-
-                // File Upload
-                const fileUpload = document.getElementById('file-upload');
-                fileUpload.addEventListener('change', handleFileUpload);
-
-                // Add / Edit Person Modal
-                document.getElementById('btn-add-person').addEventListener('click', () => openModal());
-                document.querySelectorAll('.close-modal').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-                    });
-                });
-                document.getElementById('btn-save-person').addEventListener('click', savePersonModal);
-
-                // Settings Inputs Change Events (Admin)
-                const settingInputs = [
-                    'tag-width', 'tag-height', 'page-padding', 'grid-gap', 'tag-padding',
-                    'cut-lines-toggle', 'name-size', 'position-size', 'logo-position', 'logo-height'
-                ];
-
-                settingInputs.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.addEventListener('input', updateSettingsFromUI);
-                        el.addEventListener('change', updateSettingsFromUI);
-                    }
-                });
-
-                // Reset Settings to Default (Admin)
-                const btnReset = document.getElementById('btn-reset-settings');
-                if (btnReset) btnReset.addEventListener('click', resetSettings);
-
-                // Logo Upload (Admin)
-                const logoUpload = document.getElementById('logo-upload');
-                if (logoUpload) {
-                    logoUpload.addEventListener('change', (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                                settings.logoUrl = event.target.result;
-                                saveSettingsToStorage();
-                                renderPreview();
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                }
-
-                // Print Trigger
-                document.getElementById('btn-print').addEventListener('click', () => {
-                    window.print();
-                });
-
-                // Zoom Controls
-                document.getElementById('btn-zoom-in').addEventListener('click', () => {
-                    currentZoom = Math.min(currentZoom + 0.15, 2.0);
-                    updateZoomDisplay();
-                });
-                document.getElementById('btn-zoom-out').addEventListener('click', () => {
-                    currentZoom = Math.max(currentZoom - 0.15, 0.4);
-                    updateZoomDisplay();
-                });
-                document.getElementById('btn-zoom-reset').addEventListener('click', () => {
-                    currentZoom = 1.0;
-                    updateZoomDisplay();
-                });
-            }
-
-            // --- ZOOM LOGIC ---
-            function updateZoomDisplay() {
-                const container = document.getElementById('paper-container');
-                container.style.transform = `scale(${currentZoom})`;
-                document.getElementById('zoom-level').innerText = `${Math.round(currentZoom * 100)}%`;
-            }
-
-            // --- DATA MANAGEMENT ---
-            function clearData() {
-                if (people.length === 0) return;
-                if (confirm('คุณต้องการล้างรายชื่อทั้งหมดใช่หรือไม่?')) {
-                    people = [];
-                    renderDataTable();
-                    renderPreview();
-                }
-            }
-
-            // Render 2 Columns (Name & Position)
-            function renderDataTable() {
-                const tbody = document.getElementById('names-tbody');
-                tbody.innerHTML = '';
-
-                people.forEach((p, index) => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td title="${escapeHtml(p.name)}"><strong>${escapeHtml(p.name)}</strong></td>
-                        <td title="${escapeHtml(p.position || '')}">${escapeHtml(p.position || '-')}</td>
-                        <td>
-                            <button class="btn-del" data-index="${index}" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-                document.getElementById('name-count').innerText = people.length;
-
-                tbody.querySelectorAll('.btn-del').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const idx = parseInt(e.currentTarget.getAttribute('data-index'));
-                        people.splice(idx, 1);
-                        renderDataTable();
-                        renderPreview();
-                    });
-                });
-            }
-
-            // --- GOOGLE SHEET FETCH (Robust JSONP - 100% CORS-Free) ---
-            function fetchGoogleSheet() {
-                const urlInput = document.getElementById('gsheet-url').value.trim();
-                if (!urlInput) {
-                    alert('กรุณากรอกลิงก์ Google Sheet');
-                    return;
-                }
-
-                const matches = urlInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
-                if (!matches || !matches[1]) {
-                    alert('รูปแบบลิงก์ Google Sheet ไม่ถูกต้อง');
-                    return;
-                }
-
-                const spreadsheetId = matches[1];
-                const callbackName = 'gsheet_cb_' + Math.floor(Math.random() * 1000000);
-                const jsonpUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=responseHandler:${callbackName}`;
-
-                const btnFetch = document.getElementById('btn-fetch-gsheet');
-                const originalBtnText = btnFetch.innerHTML;
-                btnFetch.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังดึงข้อมูล...';
-                btnFetch.disabled = true;
-
-                const cleanup = () => {
-                    btnFetch.innerHTML = originalBtnText;
-                    btnFetch.disabled = false;
-                    delete window[callbackName];
-                    const scriptEl = document.getElementById(callbackName);
-                    if (scriptEl) scriptEl.remove();
-                };
-
-                // Setup JSONP script
-                const script = document.createElement('script');
-                script.src = jsonpUrl;
-                script.id = callbackName;
-
-                // Setup Global Callback
-                window[callbackName] = (response) => {
-                    cleanup();
-
-                    if (!response || !response.table || !response.table.rows) {
-                        alert('ไม่พบข้อมูลตารางใน Google Sheet ที่ระบุ');
-                        return;
-                    }
-
-                    const rows = response.table.rows;
-                    const parsed = [];
-
-                    let startIdx = 0;
-                    if (rows.length > 0) {
-                        const firstRow = rows[0].c;
-                        const c0 = (firstRow && firstRow[0] && firstRow[0].v != null) ? String(firstRow[0].v).toLowerCase() : '';
-                        const c1 = (firstRow && firstRow[1] && firstRow[1].v != null) ? String(firstRow[1].v).toLowerCase() : '';
-                        if (c0.includes('ชื่อ') || c0.includes('name') || c1.includes('ตำแหน่ง') || c1.includes('position')) {
-                            startIdx = 1;
-                        }
-                    }
-
-                    for (let i = startIdx; i < rows.length; i++) {
-                        const row = rows[i].c;
-                        if (!row) continue;
-
-                        const name = (row[0] && row[0].v != null) ? String(row[0].v).trim() : '';
-                        const position = (row[1] && row[1].v != null) ? String(row[1].v).trim() : '';
-
-                        if (name) {
-                            parsed.push({ name, position });
-                        }
-                    }
-
-                    if (parsed.length > 0) {
-                        people = parsed;
-                        renderDataTable();
-                        renderPreview();
-                        alert(`ดึงข้อมูลสำเร็จ! นำเข้าแล้ว ${parsed.length} รายชื่อ`);
-                    } else {
-                        alert('ไม่พบข้อมูลรายชื่อใน Google Sheet');
-                    }
-                };
-
-                script.onerror = () => {
-                    cleanup();
-                    alert('เกิดข้อผิดพลาดในการดึงข้อมูลจาก Google Sheet\nโปรดตรวจสอบว่า Google Sheet ได้ตั้งค่าแชร์เป็น "ทุกคนที่มีลิงก์ (Anyone with the link)" แล้วหรือยัง');
-                };
-
-                document.body.appendChild(script);
-            }
-
-            // --- COPY PASTE PROCESSOR (2 Columns: Name & Position) ---
-            function processPasteInput() {
-                const text = document.getElementById('paste-input').value.trim();
-                if (!text) {
-                    alert('กรุณาวางรายชื่อในช่องข้อความ');
-                    return;
-                }
-
-                const lines = text.split(/\r?\n/);
-                const parsed = [];
-
-                lines.forEach(line => {
-                    if (!line.trim()) return;
-                    let parts = line.split('\t');
-                    if (parts.length === 1) parts = line.split(',');
-                    if (parts.length === 1) parts = line.split('|');
-
-                    const name = parts[0] ? parts[0].trim() : '';
-                    const position = parts[1] ? parts[1].trim() : '';
-
-                    if (name) {
-                        parsed.push({ name, position });
-                    }
-                });
-
-                if (parsed.length > 0) {
-                    people = parsed;
-                    renderDataTable();
-                    renderPreview();
-                    alert(`นำเข้าข้อมูลเรียบร้อยแล้วจำนวน ${parsed.length} รายชื่อ`);
-                } else {
-                    alert('ไม่พบรายชื่อที่ถูกต้อง');
-                }
-            }
-
-            // --- FILE UPLOAD (EXCEL / CSV 2 Columns) ---
-            function handleFileUpload() {
-                const fileInput = document.getElementById('file-upload');
-                if (!fileInput.files || fileInput.files.length === 0) return;
-
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-
-                reader.onload = (e) => {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    
-                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    const parsed = [];
-
-                    let startRow = 0;
-                    if (rows.length > 0) {
-                        const r0 = rows[0].map(c => String(c).toLowerCase());
-                        if (r0.some(cell => cell.includes('ชื่อ') || cell.includes('name') || cell.includes('ตำแหน่ง'))) {
-                            startRow = 1;
-                        }
-                    }
-
-                    for (let i = startRow; i < rows.length; i++) {
-                        const r = rows[i];
-                        if (!r || r.length === 0) continue;
-                        const name = r[0] ? String(r[0]).trim() : '';
-                        const position = r[1] ? String(r[1]).trim() : '';
-
-                        if (name) {
-                            parsed.push({ name, position });
-                        }
-                    }
-
-                    if (parsed.length > 0) {
-                        people = parsed;
-                        renderDataTable();
-                        renderPreview();
-                        alert(`นำเข้าไฟล์ Excel/CSV สำเร็จ! ทั้งหมด ${parsed.length} รายชื่อ`);
-                    } else {
-                        alert('ไม่พบข้อมูลรายชื่อในไฟล์');
-                    }
-                };
-
-                reader.readAsArrayBuffer(file);
-            }
-
-            function parseCSVText(csvText) {
-                const lines = csvText.split(/\r?\n/);
-                const parsed = [];
-
-                lines.forEach((line, idx) => {
-                    if (!line.trim()) return;
-                    const matches = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
-                    let parts = matches ? matches.map(m => m.replace(/^"|"$/g, '').trim()) : line.split(',');
-
-                    const name = parts[0] || '';
-                    const position = parts[1] || '';
-
-                    if (idx === 0 && (name.includes('ชื่อ') || name.includes('Name'))) return;
-
-                    if (name) {
-                        parsed.push({ name, position });
-                    }
-                });
-
-                if (parsed.length > 0) {
-                    people = parsed;
-                    renderDataTable();
-                    renderPreview();
-                }
-            }
-
-            // --- MODAL DIALOG LOGIC (2 Fields: Name & Position) ---
-            function openModal(index = -1) {
-                const modal = document.getElementById('modal-person');
-                const title = document.getElementById('modal-title');
-                document.getElementById('edit-index').value = index;
-
-                if (index >= 0) {
-                    title.innerText = 'แก้ไขรายชื่อ';
-                    const p = people[index];
-                    document.getElementById('edit-name').value = p.name || '';
-                    document.getElementById('edit-position').value = p.position || '';
-                } else {
-                    title.innerText = 'เพิ่มรายชื่อ';
-                    document.getElementById('edit-name').value = '';
-                    document.getElementById('edit-position').value = '';
-                }
-
-                modal.classList.add('active');
-            }
-
-            function savePersonModal() {
-                const index = parseInt(document.getElementById('edit-index').value);
-                const name = document.getElementById('edit-name').value.trim();
-                const position = document.getElementById('edit-position').value.trim();
-
-                if (!name) {
-                    alert('กรุณากรอก ชื่อ - นามสกุล');
-                    return;
-                }
-
-                if (index >= 0) {
-                    people[index] = { name, position };
-                } else {
-                    people.push({ name, position });
-                }
-
-                document.getElementById('modal-person').classList.remove('active');
-                renderDataTable();
-                renderPreview();
-            }
-
-            function updateSettingsFromUI() {
-                settings.tagWidth = parseFloat(document.getElementById('tag-width').value) || 9.8;
-                settings.tagHeight = parseFloat(document.getElementById('tag-height').value) || 6.0;
-                settings.pagePadding = parseFloat(document.getElementById('page-padding').value) || 5;
-                settings.gridGap = parseFloat(document.getElementById('grid-gap').value) || 2;
-                settings.tagPadding = parseFloat(document.getElementById('tag-padding').value) || 6;
-                settings.cutLines = document.getElementById('cut-lines-toggle').value;
-
-                settings.nameSize = parseInt(document.getElementById('name-size').value) || 52;
-                settings.positionSize = parseInt(document.getElementById('position-size').value) || 14;
-                settings.logoPosition = document.getElementById('logo-position').value;
-                settings.logoHeight = parseFloat(document.getElementById('logo-height').value) || 8.5;
-
-                saveSettingsToStorage();
-                renderPreview();
-            }
-
-            // --- RENDER PREVIEW ENGINE (A4 LANDSCAPE - 9 TAGS PER PAGE) ---
-            function renderPreview() {
-                const container = document.getElementById('paper-container');
-                container.innerHTML = '';
-
-                const totalPeople = people.length;
-                const tagsPerPage = 9; // 3 columns x 3 rows grid
-                const totalPages = Math.max(1, Math.ceil(totalPeople / tagsPerPage));
-
-                document.getElementById('page-summary').innerText = `${totalPages} หน้า | ${totalPeople} คน`;
-
-                for (let page = 0; page < totalPages; page++) {
-                    const pageSheet = document.createElement('div');
-                    pageSheet.className = 'a4-sheet';
-                    pageSheet.style.padding = `${settings.pagePadding}mm`;
-
-                    const gridContainer = document.createElement('div');
-                    gridContainer.className = 'tags-grid';
-                    gridContainer.style.gap = `${settings.gridGap}mm`;
-
-                    // Fill 9 slots for this page
-                    for (let i = 0; i < tagsPerPage; i++) {
-                        const personIndex = (page * tagsPerPage) + i;
-                        const tagEl = document.createElement('div');
-                        tagEl.className = `name-tag cut-${settings.cutLines} accent-${settings.accentStyle}`;
-
-                        tagEl.style.setProperty('--tag-accent-color', settings.colorAccent);
-                        tagEl.style.backgroundColor = settings.colorBg;
-                        tagEl.style.padding = `${settings.tagPadding}mm`;
-                        tagEl.style.fontFamily = settings.fontFamily;
-                        tagEl.style.textAlign = settings.textAlign;
-
-                        // Render 100% Vector-Exact Angled Orange-Gray SVG Frame
-                        if (settings.accentStyle === 'custom-frame' || settings.themePreset === 'orange-gray-frame') {
-                            const svgFrame = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                            svgFrame.setAttribute('class', 'tag-frame-svg');
-                            svgFrame.setAttribute('viewBox', '0 0 98 60');
-                            svgFrame.setAttribute('preserveAspectRatio', 'none');
-
-                            // Orange Path (#f37021)
-                            const orangePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                            orangePath.setAttribute('d', 'M 0,0 L 32.5,0 L 36.0,4.5 L 4.5,4.5 L 4.5,55.5 L 51.5,55.5 L 55.0,60 L 0,60 Z');
-                            orangePath.setAttribute('fill', settings.colorAccent);
-
-                            // Dark Gray Path (#615e5b)
-                            const grayPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                            grayPath.setAttribute('d', 'M 32.5,0 L 98,0 L 98,60 L 55.0,60 L 51.5,55.5 L 93.5,55.5 L 93.5,4.5 L 36.0,4.5 Z');
-                            grayPath.setAttribute('fill', settings.colorBorderGray);
-
-                            svgFrame.appendChild(orangePath);
-                            svgFrame.appendChild(grayPath);
-                            tagEl.appendChild(svgFrame);
-                        }
-
-                        if (personIndex < totalPeople) {
-                            const p = people[personIndex];
-
-                            // Render Logo Element
-                            if (settings.logoUrl && settings.logoPosition !== 'none') {
-                                const logoImg = document.createElement('img');
-                                logoImg.src = settings.logoUrl;
-                                logoImg.className = `tag-logo ${settings.logoPosition}`;
-                                logoImg.style.maxHeight = `${settings.logoHeight}mm`;
-                                tagEl.appendChild(logoImg);
-                            }
-
-                            // Content Container (Vertically Centered)
-                            const contentContainer = document.createElement('div');
-                            contentContainer.className = 'tag-content';
-
-                            // Name Element
-                            const nameDiv = document.createElement('div');
-                            nameDiv.className = 'tag-name';
-                            nameDiv.setAttribute('data-initial-pt', settings.nameSize);
-                            nameDiv.style.fontSize = `${settings.nameSize}pt`;
-                            nameDiv.style.fontWeight = settings.nameWeight;
-                            nameDiv.style.color = settings.colorName;
-                            nameDiv.innerText = p.name;
-                            contentContainer.appendChild(nameDiv);
-
-                            // Position Element (If present)
-                            if (p.position) {
-                                const posDiv = document.createElement('div');
-                                posDiv.className = 'tag-position';
-                                posDiv.setAttribute('data-initial-pt', settings.positionSize);
-                                posDiv.style.fontSize = `${settings.positionSize}pt`;
-                                posDiv.style.color = settings.colorPosition;
-                                posDiv.innerText = p.position;
-                                contentContainer.appendChild(posDiv);
-                            }
-
-                            tagEl.appendChild(contentContainer);
-                        } else {
-                            // Empty placeholder tag to maintain grid layout alignment on paper
-                            const contentContainer = document.createElement('div');
-                            contentContainer.className = 'tag-content';
-                            contentContainer.style.opacity = '0.3';
-                            contentContainer.innerHTML = `<span style="font-size: 0.75rem; color: #94a3b8;">[ ช่องว่างสำหรับตัดป้าย ]</span>`;
-                            tagEl.appendChild(contentContainer);
-                        }
-
-                        gridContainer.appendChild(tagEl);
-                    }
-
-                    pageSheet.appendChild(gridContainer);
-                    container.appendChild(pageSheet);
-                }
-
-                // Auto scale Name & Position font sizes using Canvas Off-screen exact text measurement
-                const autoScaleElements = () => {
-                    const cleanFontFamily = settings.fontFamily.replace(/'/g, "");
-                    
-                    // 1. Auto Scale Name
-                    container.querySelectorAll('.tag-name').forEach(nameDiv => {
-                        const text = nameDiv.innerText;
-                        if (!text) return;
-
-                        const startPt = parseFloat(nameDiv.getAttribute('data-initial-pt')) || settings.nameSize;
-                        let currentPt = startPt;
-                        
-                        const parent = nameDiv.parentElement; // .tag-content
-                        if (!parent) return;
-
-                        const maxAllowedWidth = Math.max(50, parent.clientWidth - 48);
-
-                        let fontString = `${settings.nameWeight} ${currentPt}pt ${cleanFontFamily}`;
-                        let measuredWidth = getExactTextWidth(text, fontString);
-
-                        while (measuredWidth > maxAllowedWidth && currentPt > 10) {
-                            currentPt -= 0.5;
-                            fontString = `${settings.nameWeight} ${currentPt}pt ${cleanFontFamily}`;
-                            measuredWidth = getExactTextWidth(text, fontString);
-                        }
-
-                        nameDiv.style.fontSize = `${currentPt}pt`;
-                    });
-
-                    // 2. Auto Scale Position (Single Line Auto-Fit)
-                    container.querySelectorAll('.tag-position').forEach(posDiv => {
-                        const text = posDiv.innerText;
-                        if (!text) return;
-
-                        const startPt = parseFloat(posDiv.getAttribute('data-initial-pt')) || settings.positionSize;
-                        let currentPt = startPt;
-                        
-                        const parent = posDiv.parentElement; // .tag-content
-                        if (!parent) return;
-
-                        const maxAllowedWidth = Math.max(50, parent.clientWidth - 48);
-
-                        let fontString = `400 ${currentPt}pt ${cleanFontFamily}`;
-                        let measuredWidth = getExactTextWidth(text, fontString);
-
-                        while (measuredWidth > maxAllowedWidth && currentPt > 7) {
-                            currentPt -= 0.5;
-                            fontString = `400 ${currentPt}pt ${cleanFontFamily}`;
-                            measuredWidth = getExactTextWidth(text, fontString);
-                        }
-
-                        posDiv.style.fontSize = `${currentPt}pt`;
-                    });
-                };
-
-                setTimeout(autoScaleElements, 10);
-                if (document.fonts) {
-                    document.fonts.ready.then(autoScaleElements);
-                }
-            }
-
-            // Helper Utility: HTML Escape
-            function escapeHtml(text) {
-                if (!text) return '';
-                return text
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#039;");
-            }
-
-            init();
+    <!-- VIEW 2: HR & TRAINER LIVE DASHBOARD SECTION -->
+    <div id="hr-view-section" style="display: none;">
+      
+      <!-- Trainer Emergency Unlock Box -->
+      <div id="hr-emergency-unlock-box" class="hr-emergency-card" style="display: none;">
+        <div style="font-weight: 700; color: #E65100; font-size: 0.95rem;">🚨 เปิดรับเช็คชื่อรอบชดเชยพิเศษวันนี้</div>
+        <div style="font-size: 0.82rem; color: #666; margin-top: 2px;">สำหรับกรณีเปิดเรียนชดเชยในวันพิเศษที่ไม่ได้อยู่ในตารางปกติ</div>
+        <button class="btn-hr-emergency-unlock" onclick="handleEmergencyUnlockClick()">
+          ➕ เปิดรับเช็คชื่อรอบวันนี้ (<span id="hr-emergency-today-date">-</span>) ทันที 🚀
+        </button>
+      </div>
+
+      <!-- Session Selector Dropdown -->
+      <div class="hr-control-card">
+        <label class="hr-control-label">📅 เลือกรอบวันที่ต้องการดูข้อมูล / ดูสถิติสะสม:</label>
+        <select id="hr-session-select" class="hr-session-select" onchange="onHrSessionSelectChange()">
+          <!-- Populated dynamically via JS -->
+        </select>
+      </div>
+
+      <!-- KPI Stats Grid -->
+      <div class="hr-stats-grid">
+        <div class="hr-stat-box">
+          <div class="hr-stat-label" id="hr-stat-box1-label">Present</div>
+          <div class="hr-stat-value" id="hr-stat-box1-val" style="color: var(--success);">0/0</div>
+          <div class="hr-stat-sub" id="hr-stat-box1-sub">0% ของผู้เรียนทั้งหมด</div>
+        </div>
+        <div class="hr-stat-box">
+          <div class="hr-stat-label" id="hr-stat-box2-label">Absent</div>
+          <div class="hr-stat-value" id="hr-stat-box2-val" style="color: var(--danger);">0 คน</div>
+          <div class="hr-stat-sub" id="hr-stat-box2-sub">ยังไม่เช็คชื่อ</div>
+        </div>
+      </div>
+
+      <!-- Action Button: Copy Summary to LINE & Admin Portal Link & Print A4 -->
+      <div class="hr-action-bar" style="flex-wrap: wrap;">
+        <button class="btn-hr-line-copy" onclick="copyLineSummary()">
+          💬 ก๊อปปี้สรุปส่ง LINE
+        </button>
+        <a href="admin.html" class="btn-hr-line-copy" style="background: #37474F; text-decoration: none;" target="_blank">
+          ⚙️ Admin Portal
+        </a>
+        <button class="btn-hr-line-copy" style="background: #FFF3E0; color: #E65100; border: 1.5px solid #FFE082; width: 100%; flex: 1 1 100%; justify-content: center; margin-top: 4px;" onclick="printCurrentClassA4()">
+          📄 พิมพ์เอกสารคลาส A4 (Print to PDF) 🖨️
+        </button>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div id="hr-tabs-container" class="hr-tabs-wrapper">
+        <button id="hr-tab-all" class="hr-tab-btn active" onclick="filterHrList('all')">All (<span id="hr-cnt-all">0</span>)</button>
+        <button id="hr-tab-present" class="hr-tab-btn" onclick="filterHrList('present')">Present (<span id="hr-cnt-present">0</span>) 🟢</button>
+        <button id="hr-tab-absent" class="hr-tab-btn" onclick="filterHrList('absent')">Absent (<span id="hr-cnt-absent">0</span>) 🔴</button>
+      </div>
+
+      <!-- HR Student List -->
+      <div id="hr-student-list" class="student-list">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PIN ENTRY MODAL -->
+  <div id="pin-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-avatar" style="background:#FFF3E0; color:#E65100;">🔑</div>
+      <div class="modal-title">สำหรับ HR / ผู้สอน</div>
+      <div class="modal-subtitle">กรุณากรอกรหัส PIN 4 หลักเพื่อเข้าสู่แดชบอร์ด</div>
+      
+      <input type="password" id="hr-pin-input" class="pin-input-field" maxlength="4" placeholder="••••" inputmode="numeric" onkeyup="handlePinKeyUp(event)">
+      <div id="pin-error" class="pin-error-msg">⚠️ รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</div>
+      
+      <div class="modal-actions">
+        <button class="btn-modal btn-cancel" onclick="closePinModal()">ยกเลิก</button>
+        <button class="btn-modal btn-confirm" onclick="verifyPinCode()">เข้าสู่ระบบ ✔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div id="modal-avatar" class="modal-avatar">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      </div>
+      <div id="modal-title" class="modal-title">คุณ Belle</div>
+      <div id="modal-subtitle" class="modal-subtitle">Apinya Wichchai</div>
+      <div id="modal-makeup-alert-box" style="display: none;"></div>
+      <div class="modal-warning-text">
+        🔒 <b>ข้อกำหนด:</b> เครื่องนี้จะถูกผูกกับชื่อคุณตลอดการเรียน และไม่สามารถเช็คชื่อแทนผู้อื่นได้
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal btn-cancel" onclick="closeModal()">ยกเลิก</button>
+        <button id="btn-modal-confirm" class="btn-modal btn-confirm" onclick="confirmCheckIn()">ยืนยันว่านี่คือฉัน ✔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+    <span>✔</span> <span id="toast-msg">ข้อความ</span>
+  </div>
+
+  <script>
+    const DEFAULT_HR_PIN = "0000";
+    let currentClassName = "";
+    let initialUserParam = "";
+    let appData = null;
+    let selectedStudent = null;
+    let currentViewMode = "student";
+    let currentHrFilter = "all";
+    let selectedSessionDate = "today";
+    let isLiveSyncing = true;
+
+    /* Clean User Avatar SVG Component */
+    const USER_AVATAR_SVG = `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+
+    /* Universal API Caller */
+    async function apiRequest(action, params = {}) {
+      const devToken = getDeviceToken();
+      const devFp = getDeviceFingerprint();
+
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        try {
+          if (action === "getClassData") {
+            const query = new URLSearchParams({
+              action: "getClassData",
+              className: params.className || "",
+              deviceToken: devToken,
+              deviceFingerprint: devFp
+            });
+            const res = await fetch(`${GAS_API_URL}?${query.toString()}`, {
+              method: 'GET',
+              mode: 'cors'
+            });
+            return await res.json();
+          }
+
+          const payload = { action: action, deviceToken: devToken, deviceFingerprint: devFp, ...params };
+          const res = await fetch(GAS_API_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          });
+          return await res.json();
+        } catch (err) {
+          throw new Error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: " + err.message);
+        }
+      }
+
+      return new Promise((resolve, reject) => {
+        if (action === "getClassData") {
+          google.script.run
+            .withSuccessHandler(data => resolve({ success: true, data: data }))
+            .withFailureHandler(err => reject(err))
+            .getClassData(params.className, devToken, devFp);
+        } else if (action === "recordCheckIn") {
+          google.script.run
+            .withSuccessHandler(res => resolve(res))
+            .withFailureHandler(err => reject(err))
+            .recordCheckIn(params.className, params.studentNo, params.sessionDateStr, devToken, devFp);
+        } else if (action === "cancelCheckIn") {
+          google.script.run
+            .withSuccessHandler(res => resolve(res))
+            .withFailureHandler(err => reject(err))
+            .cancelCheckIn(params.className, params.studentNo, params.sessionDateStr, devToken, devFp);
+        } else if (action === "resetDeviceIdentity") {
+          google.script.run
+            .withSuccessHandler(res => resolve(res))
+            .withFailureHandler(err => reject(err))
+            .resetDeviceIdentity(params.className, devToken, devFp);
+        } else if (action === "openEmergencySession") {
+          google.script.run
+            .withSuccessHandler(res => resolve(res))
+            .withFailureHandler(err => reject(err))
+            .openEmergencySession(params.className, params.sessionDateStr, devToken, devFp);
+        }
+      });
+    }
+
+    function cleanTimeString(rawTime) {
+      if (!rawTime) return "";
+      const cleaned = rawTime.toString().replace(/✔/g, "").replace(/[()]/g, "").trim();
+      return cleaned ? `(${cleaned})` : "";
+    }
+
+    function getDeviceFingerprint() {
+      try {
+        const nav = window.navigator || {};
+        const scr = window.screen || {};
+        const components = [
+          nav.userAgent || '',
+          nav.language || '',
+          scr.width || '',
+          scr.height || '',
+          scr.colorDepth || '',
+          nav.hardwareConcurrency || '',
+          nav.maxTouchPoints || '',
+          Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+        ];
+        let hash = 5381;
+        const rawStr = components.join('###');
+        for (let i = 0; i < rawStr.length; i++) {
+          hash = ((hash << 5) + hash) + rawStr.charCodeAt(i);
+          hash = hash & hash;
+        }
+        return 'fp_' + Math.abs(hash).toString(36);
+      } catch (e) {
+        return 'fp_fallback_' + Date.now();
+      }
+    }
+
+    function getDeviceToken() {
+      let token = null;
+      try { token = localStorage.getItem('bt_device_token'); } catch (e) {}
+      if (!token) {
+        const match = document.cookie.match(/(?:^|; )bt_device_token=([^;]*)/);
+        if (match) token = decodeURIComponent(match[1]);
+      }
+      if (!token) {
+        token = 'dev_' + Math.random().toString(36).substring(2, 12) + '_' + Date.now();
+        saveDeviceToken(token);
+      }
+      return token;
+    }
+
+    function saveDeviceToken(token) {
+      try { localStorage.setItem('bt_device_token', token); } catch (e) {}
+      document.cookie = `bt_device_token=${encodeURIComponent(token)}; max-age=31536000; path=/; SameSite=Lax`;
+    }
+
+    function getPermanentStudentKey(className) {
+      return `bt_permanent_student_${className}`;
+    }
+
+    function getDeviceCheckedDateKey(className) {
+      return `bt_device_checked_date_${className}`;
+    }
+
+    function getLocalStoredStudent(className) {
+      const key = getPermanentStudentKey(className);
+      let val = null;
+      try { val = localStorage.getItem(key); } catch (e) {}
+      if (!val) {
+        const match = document.cookie.match(new RegExp('(?:^|; )' + key + '=([^;]*)'));
+        if (match) val = decodeURIComponent(match[1]);
+      }
+      return val;
+    }
+
+    function setLocalStoredStudent(className, studentNo) {
+      const key = getPermanentStudentKey(className);
+      try { localStorage.setItem(key, String(studentNo)); } catch (e) {}
+      document.cookie = `${key}=${encodeURIComponent(String(studentNo))}; max-age=31536000; path=/; SameSite=Lax`;
+    }
+
+    function clearLocalStoredStudent(className) {
+      const key = getPermanentStudentKey(className);
+      try { localStorage.removeItem(key); } catch (e) {}
+      document.cookie = `${key}=; max-age=0; path=/; SameSite=Lax`;
+    }
+
+    function getCachedClassData(className) {
+      try {
+        const raw = localStorage.getItem(`bt_cached_data_${className}`);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setCachedClassData(className, data) {
+      try {
+        localStorage.setItem(`bt_cached_data_${className}`, JSON.stringify(data));
+      } catch (e) {}
+    }
+
+    /* ZERO-WAIT PAGE INITIALIZATION */
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      currentClassName = urlParams.get('class') || "";
+      initialUserParam = urlParams.get('u') || "";
+
+      if (currentClassName) {
+        // FAST-PATH: Render immediately from local cache in 0.00s!
+        const cached = getCachedClassData(currentClassName);
+        if (cached) {
+          isLiveSyncing = true;
+          renderClassData(cached);
+        }
+        
+        // Background live fetch
+        fetchLiveClassData(currentClassName);
+      } else {
+        document.getElementById('class-view').style.display = 'none';
+        document.getElementById('no-class-view').style.display = 'block';
+      }
+    };
+
+    function showActionLoading(show, text = "กำลังบันทึกข้อมูล...") {
+      const loader = document.getElementById('loading');
+      document.getElementById('loading-text').innerText = text;
+      loader.style.display = show ? 'flex' : 'none';
+    }
+
+    async function fetchLiveClassData(className) {
+      isLiveSyncing = true;
+      try {
+        const res = await apiRequest("getClassData", { className: className });
+        if (res.success && res.data) {
+          isLiveSyncing = false;
+          setCachedClassData(className, res.data);
+          renderClassData(res.data);
+        }
+      } catch (err) {
+        isLiveSyncing = false;
+        if (appData) renderClassData(appData);
+      }
+    }
+
+    function refreshCurrentClass() {
+      if (currentClassName) {
+        isLiveSyncing = true;
+        if (appData) renderClassData(appData);
+        fetchLiveClassData(currentClassName);
+      }
+    }
+
+    function isHrAuthenticated() {
+      return sessionStorage.getItem('bt_hr_authenticated') === 'true';
+    }
+
+    function handleRoleToggleClick() {
+      if (currentViewMode === "hr") {
+        currentViewMode = "student";
+        document.getElementById('student-view-section').style.display = 'block';
+        document.getElementById('hr-view-section').style.display = 'none';
+        document.getElementById('btn-toggle-role').innerHTML = "🔒 HR / Instructor";
+      } else {
+        if (isHrAuthenticated()) {
+          switchToHrView();
+        } else {
+          openPinModal();
+        }
+      }
+    }
+
+    function openPinModal() {
+      const pinInput = document.getElementById('hr-pin-input');
+      pinInput.value = '';
+      document.getElementById('pin-error').style.display = 'none';
+      document.getElementById('pin-modal').style.display = 'flex';
+      setTimeout(() => pinInput.focus(), 150);
+    }
+
+    function closePinModal() {
+      document.getElementById('pin-modal').style.display = 'none';
+    }
+
+    function handlePinKeyUp(e) {
+      if (e.key === 'Enter') {
+        verifyPinCode();
+      }
+    }
+
+    function verifyPinCode() {
+      const enteredPin = document.getElementById('hr-pin-input').value.trim();
+      if (enteredPin === DEFAULT_HR_PIN) {
+        sessionStorage.setItem('bt_hr_authenticated', 'true');
+        closePinModal();
+        showToast("ยินดีต้อนรับสู่แดชบอร์ด HR / ผู้สอน 👔");
+        switchToHrView();
+      } else {
+        document.getElementById('pin-error').style.display = 'block';
+        document.getElementById('hr-pin-input').value = '';
+        document.getElementById('hr-pin-input').focus();
+      }
+    }
+
+    function switchToHrView() {
+      currentViewMode = "hr";
+      document.getElementById('student-view-section').style.display = 'none';
+      document.getElementById('hr-view-section').style.display = 'block';
+      document.getElementById('btn-toggle-role').innerHTML = "👈 Back";
+      initHrSessionSelector();
+      renderHrDashboard();
+    }
+
+    async function handleEmergencyUnlockClick() {
+      if (!currentClassName || !appData) return;
+      if (confirm(`ยืนยันการเปิดรับเช็คชื่อรอบชดเชยพิเศษสำหรับวันนี้ (${appData.todayDateStr}) หรือไม่?`)) {
+        showActionLoading(true, "กำลังเปิดรอบเรียนพิเศษ...");
+        try {
+          const res = await apiRequest("openEmergencySession", {
+            className: currentClassName,
+            sessionDateStr: appData.todayDateStr
+          });
+          showActionLoading(false);
+          if (res.success) {
+            setCachedClassData(currentClassName, res.updatedData);
+            showToast("เปิดรอบเรียนพิเศษสำเร็จแล้ว! 🚀");
+            renderClassData(res.updatedData);
+          } else {
+            alert("เกิดข้อผิดพลาด: " + res.message);
+          }
+        } catch (err) {
+          handleError(err);
+        }
+      }
+    }
+
+    function renderClassData(data) {
+      appData = data;
+
+      if (data.courseInfo) {
+        currentClassName = data.courseInfo.className;
+        document.getElementById('course-name').innerText = data.courseInfo.course;
+        document.getElementById('company-name').innerText = data.courseInfo.company || 'ลูกค้า';
+        document.getElementById('class-duration').innerText = data.courseInfo.classDuration || '';
+        document.getElementById('schedule-text').innerText = data.courseInfo.schedule || '-';
+      }
+
+      // Multi-Tier Identity Resolution
+      let effectiveStudentNo = data.boundStudentNo;
+      if (!effectiveStudentNo && initialUserParam) {
+        effectiveStudentNo = initialUserParam;
+      }
+      if (!effectiveStudentNo) {
+        effectiveStudentNo = getLocalStoredStudent(currentClassName);
+      }
+      
+      if (effectiveStudentNo) {
+        setLocalStoredStudent(currentClassName, effectiveStudentNo);
+      }
+
+      const savedStudent = effectiveStudentNo ? data.students.find(s => String(s.no) === String(effectiveStudentNo)) : null;
+
+      // Session Info Badge
+      const badge = document.getElementById('session-display-badge');
+      const noticeBox = document.getElementById('notice-container');
+      noticeBox.innerHTML = '';
+
+      if (data.isClassToday) {
+        if (data.isAutoMakeupSession) {
+          badge.innerHTML = `⚠️ วันนี้: <b>${data.currentSessionDate}</b> (เปิดรับรอบชดเชยพิเศษ)`;
+          badge.style.background = '#FFF3E0';
+          badge.style.color = '#E65100';
+
+          noticeBox.innerHTML = `
+            <div class="notice-box notice-warning" style="background:#FFF3E0; border:1.5px solid #FFE082; color:#D84315;">
+              <span>⚠️</span>
+              <div>
+                <b>แจ้งเตือน: วันนี้อยู่นอกตารางเรียนปกติ (${data.currentSessionDate})</b><br>
+                หากผู้สอนหรือ HR นัดหมายให้เรียนชดเชยในวันนี้จริง สามารถแตะชื่อของคุณเพื่อยืนยันเช็คชื่อได้เลยครับ
+              </div>
+            </div>
+          `;
+        } else {
+          badge.innerHTML = `📅 วันนี้: <b>${data.currentSessionDate}</b> (เปิดรับเช็คชื่อ)`;
+          badge.style.background = '#E8F5E9';
+          badge.style.color = '#2E7D32';
+        }
+      } else {
+        const nextText = data.nextSession ? `รอบถัดไป: <b>${data.nextSession.display}</b>` : '';
+        badge.innerHTML = `⛔ วันนี้ไม่มีคลาสเรียน (${data.todayDateStr})`;
+        badge.style.background = '#FFEBEE';
+        badge.style.color = '#C62828';
+
+        noticeBox.innerHTML = `
+          <div class="notice-box notice-warning">
+            <span>⚠️</span>
+            <div>
+              <b>ไม่อยู่ในช่วงเวลาเรียน</b><br>
+              ระบบเปิดให้เช็คชื่อเฉพาะวันเรียนจริงเท่านั้น (${nextText})
+            </div>
+          </div>
+        `;
+      }
+
+      // 📅 Calculate and render Next Class Date UI
+      const nextBanner = document.getElementById('next-class-banner');
+      const nextDateText = document.getElementById('next-class-date-text');
+      const nextBadge = document.getElementById('next-class-session-badge');
+      
+      const validSessions = data.validSessions || (data.sessions ? data.sessions.filter(s => !s.isHoliday) : []);
+      if (validSessions.length > 0) {
+        const normalizeStr = (d) => d ? d.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, "") : "";
+        const todayNorm = normalizeStr(data.todayDateStr);
+        const todayIdx = validSessions.findIndex(s => normalizeStr(s.dateStr) === todayNorm);
+        
+        let nextSess = null;
+        if (todayIdx !== -1 && todayIdx + 1 < validSessions.length) {
+          nextSess = validSessions[todayIdx + 1];
+        } else if (todayIdx === -1) {
+          const todayTs = new Date().setHours(0,0,0,0);
+          nextSess = validSessions.find(s => {
+            const p = Date.parse(s.dateStr);
+            return !isNaN(p) && p > todayTs;
+          }) || data.nextSession || validSessions[0];
+        }
+
+        if (nextSess && nextSess.dateStr) {
+          nextDateText.innerText = nextSess.dateStr;
+          nextBadge.innerText = `ครั้งที่ ${nextSess.no || '-'}`;
+          nextBadge.style.background = '#E3F2FD';
+          nextBadge.style.color = '#0D47A1';
+          nextBadge.style.borderColor = '#BBDEFB';
+          nextBanner.style.display = 'flex';
+        } else if (todayIdx === validSessions.length - 1) {
+          nextDateText.innerText = 'วันนี้เป็นรอบสุดท้ายของคอร์ส';
+          nextBadge.innerText = '🏁 Final Session';
+          nextBadge.style.background = '#E8F5E9';
+          nextBadge.style.color = '#2E7D32';
+          nextBadge.style.borderColor = '#A5D6A7';
+          nextBanner.style.display = 'flex';
+        } else {
+          nextBanner.style.display = 'none';
+        }
+      } else {
+        nextBanner.style.display = 'none';
+      }
+
+      // Render Active Exam Banners (Only show clickable link if student has checked in!)
+      if (data.activeExams && data.activeExams.length > 0) {
+        const isStudentCheckedIn = savedStudent && savedStudent.isChecked;
+
+        const cleanExamUrl = (u) => {
+          if (!u) return '';
+          let s = u.toString().trim();
+          if (!s) return '';
+          if (!s.match(/^https?:\/\//i)) s = 'https://' + s;
+          return s;
+        };
+
+        data.activeExams.forEach(exam => {
+          let examBanner = '';
+          const targetUrl = cleanExamUrl(exam.url);
+          if (isStudentCheckedIn) {
+            // UNLOCKED: Student has checked in -> Show clickable exam container!
+            examBanner = `
+              <div style="background: linear-gradient(135deg, #E8F5E9, #C8E6C9); border: 2px solid #4CAF50; border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(76, 175, 80, 0.15); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="font-size: 2rem;">📝</div>
+                  <div>
+                    <div style="font-weight: 800; font-size: 1.05rem; color: #1B5E20;">${exam.title} (ปลดล็อกแล้ว)</div>
+                    <div style="font-size: 0.84rem; color: #2E7D32; margin-top: 2px;">คุณเช็คชื่อเรียบร้อยแล้ว กรุณาแตะทำแบบทดสอบประจำครั้งที่ ${exam.sessionNo}</div>
+                  </div>
+                </div>
+                <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; background: #2E7D32; color: white; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 0.92rem; text-decoration: none; box-shadow: 0 3px 10px rgba(46,125,50,0.3); white-space: nowrap; flex-shrink: 0;">
+                  ทำข้อสอบ 🔗
+                </a>
+              </div>
+            `;
+          } else {
+            // LOCKED: Student hasn't checked in yet -> Require check-in first!
+            examBanner = `
+              <div style="background: #FFF8E1; border: 1.5px dashed #FFA000; border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #BF360C;">
+                <span style="font-size: 1.5rem; flex-shrink: 0;">🔒</span>
+                <div>
+                  <b style="color:#E65100;">มีแบบทดสอบ: ${exam.title} ประจำครั้งที่ ${exam.sessionNo}</b><br>
+                  กรุณาแตะเลือกชื่อของคุณเพื่อ <b>"เช็คชื่อเข้าเรียน"</b> ให้เรียบร้อยก่อน ระบบจึงจะเปิดปุ่มทำแบบทดสอบให้ครับ
+                </div>
+              </div>
+            `;
+          }
+          noticeBox.insertAdjacentHTML('afterbegin', examBanner);
         });
-    </script>
+      }
+
+      // Render Student View
+      renderPersonalCard(savedStudent, data.isClassToday);
+      renderStudentList(data.students, data.isClassToday, savedStudent);
+
+      // Refresh HR dashboard too if active
+      if (currentViewMode === "hr") {
+        initHrSessionSelector();
+        renderHrDashboard();
+      }
+    }
+
+    function renderPersonalCard(savedStudent, isClassToday) {
+      const container = document.getElementById('personal-card-container');
+      
+      if (!savedStudent) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let actionHtml = '';
+      let switchBtnHtml = '';
+
+      if (!isClassToday) {
+        actionHtml = `
+          <div class="checked-success-box" style="background:#FFF3E0; border-color:#FFE082; color:#E65100;">
+            <div class="checked-success-title">⏳ วันนี้ไม่มีรอบเรียน</div>
+            <div style="font-size:0.85rem; color:#757575;">ระบบจะเปิดรับเช็คชื่อในวันเรียนถัดไป</div>
+          </div>
+        `;
+        switchBtnHtml = `
+          <div class="personal-card-footer">
+            <button class="switch-user-btn" onclick="resetSavedStudent()">
+              🔄 ไม่ใช่คุณ ${savedStudent.nickname || savedStudent.name}? (เปลี่ยนอุปกรณ์ / สลับชื่อ)
+            </button>
+          </div>
+        `;
+      } else if (savedStudent.isChecked) {
+        const formattedTime = (savedStudent.checkTime || "").replace(/✔/g, "").replace(/[()]/g, "").trim();
+        actionHtml = `
+          <div class="checked-success-box">
+            <div class="checked-success-title">✔ เช็คชื่อเข้าเรียนวันนี้แล้ว</div>
+            <div class="checked-success-time">บันทึกเวลา: ${formattedTime || savedStudent.checkTime} น.</div>
+            <button class="btn-undo-checkin" onclick="confirmUndoCheckIn(savedStudentObject)">
+              ↩️ ยกเลิกการเช็คชื่อวันนี้ (กดผิดคน / ยกเลิก)
+            </button>
+          </div>
+        `;
+        window.savedStudentObject = savedStudent;
+        switchBtnHtml = '';
+      } else {
+        actionHtml = `
+          <button class="btn-personal-checkin" onclick="openModal(savedStudentObject)">
+            👉 แตะเพื่อเช็คชื่อเข้าเรียนวันนี้ ✔
+          </button>
+        `;
+        window.savedStudentObject = savedStudent;
+        switchBtnHtml = `
+          <div class="personal-card-footer">
+            <button class="switch-user-btn" onclick="resetSavedStudent()">
+              🔄 ไม่ใช่คุณ ${savedStudent.nickname || savedStudent.name}? (เปลี่ยนอุปกรณ์ / สลับชื่อ)
+            </button>
+          </div>
+        `;
+      }
+
+      // Top-Right Sync Status inside Name Card
+      const syncStatusHtml = isLiveSyncing
+        ? `<div class="card-status-badge syncing"><span class="status-dot pulse"></span> กำลังซิงค์...</div>`
+        : `<div class="card-status-badge"><span class="status-dot"></span> เชื่อมต่อแล้ว</div>`;
+
+      container.innerHTML = `
+        <div class="personal-card">
+          ${syncStatusHtml}
+          <div class="personal-header">
+            <div class="personal-avatar">${USER_AVATAR_SVG}</div>
+            <div class="personal-info">
+              <div class="personal-greeting">👋 สวัสดี</div>
+              <div class="personal-name">คุณ ${savedStudent.nickname || savedStudent.name}</div>
+              <div class="personal-dept">${savedStudent.name} ${savedStudent.dept && savedStudent.dept !== '-' ? '(' + savedStudent.dept + ')' : ''}</div>
+            </div>
+          </div>
+          ${actionHtml}
+          ${switchBtnHtml}
+        </div>
+      `;
+    }
+
+    function renderStudentList(students, isClassToday, savedStudent) {
+      const listEl = document.getElementById('student-list');
+      listEl.innerHTML = '';
+      let checkedCount = 0;
+
+      const headerTitle = document.getElementById('list-header-title');
+      
+      if (savedStudent) {
+        headerTitle.innerText = "สถานะการเข้าเรียนของเพื่อนร่วมคลาส 👥";
+      } else {
+        headerTitle.innerText = "แตะชื่อของคุณเพื่อเช็คชื่อ (ครั้งแรก) 👇";
+      }
+
+      students.forEach(st => {
+        if (st.isChecked) checkedCount++;
+
+        const canClick = !savedStudent && isClassToday && !st.isChecked;
+
+        const card = document.createElement('div');
+        let cardClass = 'student-card';
+        if (st.isChecked) {
+          cardClass += ' checked';
+        } else if (canClick) {
+          cardClass += ' clickable';
+        } else {
+          cardClass += ' disabled';
+        }
+        card.className = cardClass;
+        
+        if (canClick) {
+          card.onclick = () => openModal(st);
+        }
+
+        const deptHtml = st.dept && st.dept !== '-' ? `<div class="student-dept">🏢 ${st.dept}</div>` : '';
+        
+        let rightActionHtml = '';
+        if (st.isChecked) {
+          const timeClean = cleanTimeString(st.checkTime);
+          rightActionHtml = `
+            <div class="checked-badge">
+              <span class="checked-label">✔ Present</span>
+              <span class="checked-time">${timeClean}</span>
+            </div>
+          `;
+        } else if (!savedStudent && isClassToday) {
+          rightActionHtml = `<button class="btn-checkin">Select</button>`;
+        } else {
+          rightActionHtml = `<span style="font-size:0.85rem; color:#9E9E9E; font-weight:600;">Absent</span>`;
+        }
+
+        card.innerHTML = `
+          <div class="student-left">
+            <div class="student-avatar">${USER_AVATAR_SVG}</div>
+            <div class="student-info">
+              <div class="student-nickname">
+                <span>${st.nickname || st.name}</span>
+                <span class="student-index-tag">#${st.no}</span>
+              </div>
+              <div class="student-name">${st.name}</div>
+              ${deptHtml}
+            </div>
+          </div>
+          <div class="student-status">${rightActionHtml}</div>
+        `;
+
+        listEl.appendChild(card);
+      });
+
+      const total = students.length;
+      document.getElementById('stat-text').innerText = `Present ${checkedCount}/${total} คน`;
+      const percent = total > 0 ? (checkedCount / total) * 100 : 0;
+      document.getElementById('progress-bar').style.width = percent + '%';
+    }
+
+    /* HR DASHBOARD ENGINE */
+    function initHrSessionSelector() {
+      if (!appData || !appData.sessions) return;
+
+      const sel = document.getElementById('hr-session-select');
+      const prevVal = sel.value || selectedSessionDate;
+      sel.innerHTML = '';
+
+      const todayDate = appData.currentSessionDate;
+      const optToday = document.createElement('option');
+      optToday.value = 'today';
+      optToday.innerText = `📅 รอบวันนี้ / ล่าสุด (${todayDate || appData.todayDateStr})`;
+      sel.appendChild(optToday);
+
+      const optAll = document.createElement('option');
+      optAll.value = 'cumulative';
+      optAll.innerText = `📊 สรุปสถิติสะสมตลอดหลักสูตร (All Sessions)`;
+      sel.appendChild(optAll);
+
+      const group = document.createElement('optgroup');
+      group.label = "── ประวัติย้อนหลังแยกรายครั้ง ──";
+
+      appData.sessions.forEach((s, idx) => {
+        const opt = document.createElement('option');
+        opt.value = s.dateStr;
+        opt.innerText = s.display || `ครั้งที่ ${s.no || (idx + 1)} (${s.dateStr})`;
+        group.appendChild(opt);
+      });
+      sel.appendChild(group);
+
+      sel.value = prevVal || 'today';
+      selectedSessionDate = sel.value;
+    }
+
+    function onHrSessionSelectChange() {
+      selectedSessionDate = document.getElementById('hr-session-select').value;
+      renderHrDashboard();
+    }
+
+    function renderHrDashboard() {
+      if (!appData || !appData.students) return;
+
+      const students = appData.students;
+      const totalStudents = students.length;
+      const totalSessions = appData.totalSessionsCount || appData.sessions.length || 15;
+
+      const emergencyBox = document.getElementById('hr-emergency-unlock-box');
+      if (!appData.isClassToday) {
+        emergencyBox.style.display = 'block';
+        document.getElementById('hr-emergency-today-date').innerText = appData.todayDateStr;
+      } else {
+        emergencyBox.style.display = 'none';
+      }
+
+      const tabsContainer = document.getElementById('hr-tabs-container');
+
+      if (selectedSessionDate === 'cumulative') {
+        tabsContainer.style.display = 'none';
+
+        let grandTotalPresent = 0;
+        students.forEach(s => grandTotalPresent += (s.totalPresent || 0));
+        const maxPossibleAttendances = totalStudents * totalSessions;
+        const overallPct = maxPossibleAttendances > 0 ? Math.round((grandTotalPresent / maxPossibleAttendances) * 100) : 0;
+
+        document.getElementById('hr-stat-box1-label').innerText = "อัตราเข้าเรียนเฉลี่ยรวม";
+        document.getElementById('hr-stat-box1-val').innerText = `${overallPct}%`;
+        document.getElementById('hr-stat-box1-val').style.color = "var(--primary)";
+        document.getElementById('hr-stat-box1-sub').innerText = `จากทั้งหมด ${totalSessions} ครั้ง`;
+
+        document.getElementById('hr-stat-box2-label').innerText = "ผู้เรียนทั้งหมด";
+        document.getElementById('hr-stat-box2-val').innerText = `${totalStudents} คน`;
+        document.getElementById('hr-stat-box2-val').style.color = "var(--text-main)";
+        document.getElementById('hr-stat-box2-sub').innerText = `ในคลาสนี้`;
+
+        renderHrCumulativeStudentList(students, totalSessions);
+      } else {
+        tabsContainer.style.display = 'flex';
+
+        const targetDate = (selectedSessionDate === 'today') ? appData.currentSessionDate : selectedSessionDate;
+
+        const presentList = [];
+        const absentList = [];
+
+        students.forEach(st => {
+          let isPresent = false;
+          let checkTime = "";
+
+          if (selectedSessionDate === 'today') {
+            isPresent = st.isChecked;
+            checkTime = st.checkTime;
+          } else {
+            const histVal = (st.attendanceHistory && st.attendanceHistory[targetDate]) || "";
+            if (histVal.trim() !== "") {
+              isPresent = true;
+              checkTime = histVal;
+            }
+          }
+
+          if (isPresent) {
+            presentList.push({ ...st, sessionCheckTime: checkTime });
+          } else {
+            absentList.push(st);
+          }
+        });
+
+        const presentCount = presentList.length;
+        const absentCount = absentList.length;
+        const pct = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
+
+        document.getElementById('hr-stat-box1-label').innerText = "Present";
+        document.getElementById('hr-stat-box1-val').innerText = `${presentCount}/${totalStudents}`;
+        document.getElementById('hr-stat-box1-val').style.color = "var(--success)";
+        document.getElementById('hr-stat-box1-sub').innerText = `${pct}% ของผู้เรียนทั้งหมด`;
+
+        document.getElementById('hr-stat-box2-label').innerText = "Absent";
+        document.getElementById('hr-stat-box2-val').innerText = `${absentCount} คน`;
+        document.getElementById('hr-stat-box2-val').style.color = "var(--danger)";
+        document.getElementById('hr-stat-box2-sub').innerText = `ยังไม่เช็คชื่อ`;
+
+        document.getElementById('hr-cnt-all').innerText = totalStudents;
+        document.getElementById('hr-cnt-present').innerText = presentCount;
+        document.getElementById('hr-cnt-absent').innerText = absentCount;
+
+        renderHrSingleSessionStudentList(presentList, absentList, targetDate);
+      }
+    }
+
+    function filterHrList(filter) {
+      currentHrFilter = filter;
+      document.getElementById('hr-tab-all').classList.toggle('active', filter === 'all');
+      document.getElementById('hr-tab-present').classList.toggle('active', filter === 'present');
+      document.getElementById('hr-tab-absent').classList.toggle('active', filter === 'absent');
+      renderHrDashboard();
+    }
+
+    function renderHrSingleSessionStudentList(presentList, absentList, targetDate) {
+      const listEl = document.getElementById('hr-student-list');
+      listEl.innerHTML = '';
+
+      let listToShow = [];
+      if (currentHrFilter === 'all') {
+        appData.students.forEach(st => {
+          const isP = presentList.find(p => p.no === st.no);
+          listToShow.push({ ...st, isPresentSession: !!isP, sessionTime: isP ? isP.sessionCheckTime : "" });
+        });
+      } else if (currentHrFilter === 'present') {
+        listToShow = presentList.map(st => ({ ...st, isPresentSession: true, sessionTime: st.sessionCheckTime }));
+      } else if (currentHrFilter === 'absent') {
+        listToShow = absentList.map(st => ({ ...st, isPresentSession: false, sessionTime: "" }));
+      }
+
+      if (listToShow.length === 0) {
+        listEl.innerHTML = `<div style="text-align:center; padding:20px; color:#9E9E9E; font-size:0.9rem;">ไม่มีรายชื่อในหมวดนี้</div>`;
+        return;
+      }
+
+      listToShow.forEach(st => {
+        const card = document.createElement('div');
+        card.className = 'student-card disabled' + (st.isPresentSession ? ' checked' : '');
+
+        const deptHtml = st.dept && st.dept !== '-' ? `<div class="student-dept">🏢 ${st.dept}</div>` : '';
+        
+        let rightStatus = '';
+        if (st.isPresentSession) {
+          const timeClean = cleanTimeString(st.sessionTime);
+          rightStatus = `
+            <div class="checked-badge">
+              <span class="checked-label">✔ Present</span>
+              <span class="checked-time">${timeClean}</span>
+            </div>
+          `;
+        } else {
+          rightStatus = `
+            <div style="text-align:right;">
+              <span style="color:var(--danger); font-size:0.88rem; font-weight:700;">Absent</span>
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="student-left">
+            <div class="student-avatar">${USER_AVATAR_SVG}</div>
+            <div class="student-info">
+              <div class="student-nickname">
+                <span>${st.nickname || st.name}</span>
+                <span class="student-index-tag">#${st.no}</span>
+              </div>
+              <div class="student-name">${st.name}</div>
+              ${deptHtml}
+            </div>
+          </div>
+          <div class="student-status">${rightStatus}</div>
+        `;
+
+        listEl.appendChild(card);
+      });
+    }
+
+    function renderHrCumulativeStudentList(students, totalSessions) {
+      const listEl = document.getElementById('hr-student-list');
+      listEl.innerHTML = '';
+
+      students.forEach(st => {
+        const card = document.createElement('div');
+        card.className = 'student-card disabled';
+
+        const attended = st.totalPresent || 0;
+        const pct = totalSessions > 0 ? Math.round((attended / totalSessions) * 100) : 0;
+        
+        const deptHtml = st.dept && st.dept !== '-' ? `<div class="student-dept">🏢 ${st.dept}</div>` : '';
+
+        card.innerHTML = `
+          <div class="student-left">
+            <div class="student-avatar">${USER_AVATAR_SVG}</div>
+            <div class="student-info">
+              <div class="student-nickname">
+                <span>${st.nickname || st.name}</span>
+                <span class="student-index-tag">#${st.no}</span>
+              </div>
+              <div class="student-name">${st.name}</div>
+              ${deptHtml}
+              <div class="mini-progress-bg">
+                <div class="mini-progress-fill" style="width: ${pct}%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="student-status" style="text-align:right; margin-left:12px;">
+            <div style="font-size:1.05rem; font-weight:800; color:var(--primary);">${attended}/${totalSessions} ครั้ง</div>
+            <div style="font-size:0.82rem; font-weight:600; color:#555;">เข้าเรียน ${pct}%</div>
+          </div>
+        `;
+
+        listEl.appendChild(card);
+      });
+    }
+
+    function copyLineSummary() {
+      if (!appData) return;
+
+      const c = appData.courseInfo;
+      const students = appData.students;
+      const totalStudents = students.length;
+      const totalSessions = appData.totalSessionsCount || appData.sessions.length || 15;
+
+      let lineText = "";
+
+      if (selectedSessionDate === 'cumulative') {
+        let grandTotalPresent = 0;
+        students.forEach(s => grandTotalPresent += (s.totalPresent || 0));
+        const maxPossible = totalStudents * totalSessions;
+        const overallPct = maxPossible > 0 ? Math.round((grandTotalPresent / maxPossible) * 100) : 0;
+
+        let rankText = students.map(s => {
+          const pct = Math.round(((s.totalPresent || 0) / totalSessions) * 100);
+          return `• ${s.nickname || s.name}: ${s.totalPresent || 0}/${totalSessions} ครั้ง (${pct}%)`;
+        }).join('\n');
+
+        lineText = 
+`📊 สรุปสถิติการเข้าเรียนสะสม — B Tools Training
+🏢 บริษัท: ${c.company || '-'}
+📚 หลักสูตร: ${c.course || '-'}
+📈 อัตราการเข้าเรียนเฉลี่ยรวม: ${overallPct}%
+---------------------------------
+สรุปรายบุคคล (ทั้งหมด ${totalSessions} ครั้ง):
+${rankText}
+---------------------------------
+🔗 ตรวจสอบสด: ${window.location.href}`;
+
+      } else {
+        const targetDate = (selectedSessionDate === 'today') ? (appData.currentSessionDate || appData.todayDateStr) : selectedSessionDate;
+
+        const presentList = [];
+        const absentList = [];
+
+        students.forEach(st => {
+          let isP = false;
+          if (selectedSessionDate === 'today') {
+            isP = st.isChecked;
+          } else {
+            const histVal = (st.attendanceHistory && st.attendanceHistory[targetDate]) || "";
+            isP = (histVal.trim() !== "");
+          }
+
+          if (isP) presentList.push(st);
+          else absentList.push(st);
+        });
+
+        const pct = totalStudents > 0 ? Math.round((presentList.length / totalStudents) * 100) : 0;
+        let absentNames = absentList.map(s => s.nickname || s.name).join(', ');
+        if (!absentNames) absentNames = "- (มาครบทุกคน)";
+
+        lineText = 
+`📋 สรุปการเข้าเรียน — B Tools Training
+🏢 บริษัท: ${c.company || '-'}
+📚 หลักสูตร: ${c.course || '-'}
+📅 วันที่: ${targetDate}
+---------------------------------
+✅ มาเรียนแล้ว (Present): ${presentList.length}/${totalStudents} คน (${pct}%)
+❌ ยังไม่เช็คชื่อ (Absent): ${absentList.length} คน (${absentNames})
+---------------------------------
+🔗 ตรวจสอบสด: ${window.location.href}`;
+      }
+
+      navigator.clipboard.writeText(lineText).then(() => {
+        showToast("ก๊อปปี้รายงานสรุปส่ง LINE เรียบร้อยแล้ว! 📋");
+      }).catch(() => {
+        alert("กรุณาก๊อปปี้ข้อความนี้:\n\n" + lineText);
+      });
+    }
+
+    /* =========================================================================
+       PRINT A4 CLASS SHEET ENGINE (EXACT MATCH TO TEMPLATE)
+       ========================================================================= */
+    function printCurrentClassA4() {
+      if (!appData) return;
+      const c = appData.courseInfo || {};
+      const students = appData.students || [];
+      const sessions = appData.sessions || [];
+      const maxRows = Math.max(students.length, sessions.length, 15);
+
+      // Student rows HTML
+      let studentRowsHtml = '';
+      for (let i = 0; i < maxRows; i++) {
+        const st = students[i];
+        const no = st ? st.no : (i + 1);
+        const name = st ? st.name : '';
+        const nick = st ? (st.nickname || '') : '';
+        const dept = st ? (st.dept || '') : '';
+
+        studentRowsHtml += `
+          <tr>
+            <td style="text-align:center; width:35px;">${no}</td>
+            <td style="width:190px;">${name}</td>
+            <td style="text-align:center; width:75px;">${nick}</td>
+            <td style="width:110px;">${dept}</td>
+          </tr>
+        `;
+      }
+
+      // Schedule rows HTML
+      let scheduleRowsHtml = '';
+      for (let i = 0; i < maxRows; i++) {
+        const sess = sessions[i];
+        const no = sess ? (sess.no || '') : (i + 1);
+        const dateStr = sess ? sess.dateStr : '';
+        const remark = sess ? (sess.remark || '') : '';
+        const isSkipOrHoliday = sess && sess.isHoliday;
+
+        const rowStyle = isSkipOrHoliday ? 'background-color:#FFF3E0; color:#D84315; font-weight:bold;' : '';
+
+        scheduleRowsHtml += `
+          <tr style="${rowStyle}">
+            <td style="text-align:center; width:35px;">${no}</td>
+            <td style="text-align:center; width:85px;">${dateStr}</td>
+            <td style="width:130px;">${remark}</td>
+          </tr>
+        `;
+      }
+
+      // QR Code URL
+      const fullUrl = window.location.href;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(fullUrl)}`;
+
+      const printWin = window.open('', '_blank', 'width=900,height=1100');
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Class Sheet - ${c.course} (${currentClassName})</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 12mm 15mm;
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+              font-family: 'Sarabun', -apple-system, sans-serif !important;
+            }
+            body {
+              background: white;
+              color: #202124;
+              padding: 10px 15px;
+              font-size: 13px;
+              line-height: 1.4;
+            }
+            .header-logo {
+              height: 36px;
+              width: auto;
+              margin-bottom: 12px;
+              display: block;
+            }
+            .meta-list {
+              margin-bottom: 14px;
+              font-size: 13px;
+              line-height: 1.6;
+            }
+            .meta-item b {
+              display: inline-block;
+              min-width: 85px;
+              color: #000;
+            }
+            .tables-flex {
+              display: flex;
+              gap: 16px;
+              align-items: flex-start;
+              margin-bottom: 24px;
+            }
+            .table-wrap {
+              flex: 1;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 12px;
+            }
+            th {
+              background-color: #E65100;
+              color: white;
+              font-weight: 700;
+              padding: 6px 8px;
+              text-align: center;
+              border: 1px solid #BF360C;
+            }
+            td {
+              padding: 5px 8px;
+              border: 1px solid #BDBDBD;
+              height: 23px;
+              vertical-align: middle;
+            }
+            .qr-section {
+              margin-top: 10px;
+              display: flex;
+              align-items: flex-start;
+              gap: 18px;
+            }
+            .qr-card {
+              border: 1.5px solid #E0E0E0;
+              padding: 8px;
+              border-radius: 12px;
+              display: inline-block;
+              text-align: center;
+              background: #FAFAFA;
+            }
+            .qr-card img {
+              width: 140px;
+              height: 140px;
+              display: block;
+              margin: 0 auto;
+            }
+            .qr-desc {
+              font-size: 12px;
+              color: #555;
+              margin-top: 6px;
+              font-weight: 600;
+            }
+            @media print {
+              body { padding: 0; }
+              .no-print { display: none !important; }
+            }
+          </style>
+        </head>
+        <body onload="window.print();">
+          <img src="https://iili.io/CLrwrGa.png" class="header-logo" alt="B Tools Training">
+          
+          <div class="meta-list">
+            <div class="meta-item"><b>Company:</b> ${c.company || 'B Tools Training'}</div>
+            <div class="meta-item"><b>Course:</b> ${c.course || '-'}</div>
+            <div class="meta-item"><b>Class:</b> ${c.classDuration || '-'}</div>
+            <div class="meta-item"><b>Schedule:</b> ${c.schedule || '-'}</div>
+            <div class="meta-item"><b>Location:</b> ${c.location || '-'}</div>
+            <div class="meta-item"><b>Start date:</b> ${c.startDate || '-'}</div>
+          </div>
+
+          <div class="tables-flex">
+            <!-- Left Table: Students -->
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:35px;">No.</th>
+                    <th>Name</th>
+                    <th style="width:75px;">Nickname</th>
+                    <th style="width:110px;">Department</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${studentRowsHtml}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Right Table: Schedule -->
+            <div class="table-wrap" style="flex: 0.85;">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:35px;">No.</th>
+                    <th style="width:85px;">Date</th>
+                    <th>Remark</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${scheduleRowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="qr-section">
+            <div class="qr-card">
+              <img src="${qrApiUrl}" alt="QR Code">
+              <div class="qr-desc">📱 สแกนเช็คชื่อคลาสนี้</div>
+            </div>
+            <div style="font-size:12px; color:#666; line-height:1.6; padding-top:10px;">
+              <div style="font-weight:700; color:#E65100; font-size:13px; margin-bottom:4px;">💡 คำแนะนำสำหรับผู้สอน / HR:</div>
+              <div>• สามารถนำเอกสารใบนี้ไปวางประจำห้องเรียน หรือส่งไฟล์ PDF ให้ผู้เรียน</div>
+              <div>• ผู้เรียนสามารถเปิดกล้องมือถือสแกน QR Code ด้านซ้ายเพื่อเช็คชื่อเข้าเรียนได้ทันที</div>
+              <div>• สถิติการเช็คชื่อทั้งหมดจะบันทึกเข้าสู่ระบบแบบเรียลไทม์อัตโนมัติ</div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+    }
+
+    function openModal(student) {
+      if (!appData || !appData.isClassToday) {
+        alert("ขออภัย วันนี้ไม่มีรอบเรียน ไม่สามารถเช็คชื่อล่วงหน้าหรือย้อนหลังได้");
+        return;
+      }
+
+      const deviceCheckedDate = localStorage.getItem(getDeviceCheckedDateKey(currentClassName));
+      const savedStudentNo = getLocalStoredStudent(currentClassName);
+
+      if (deviceCheckedDate === appData.currentSessionDate && savedStudentNo && String(savedStudentNo) !== String(student.no)) {
+        alert("⚠️ อุปกรณ์เครื่องนี้ได้ทำการเช็คชื่อในรอบวันนี้ไปแล้ว ไม่อนุญาตให้เช็คชื่อแทนผู้อื่นในวันเดียวกัน");
+        return;
+      }
+      
+      selectedStudent = student;
+      document.getElementById('modal-title').innerText = `คุณ ${student.nickname || student.name}`;
+      document.getElementById('modal-subtitle').innerText = `${student.name} ${student.dept && student.dept !== '-' ? '(' + student.dept + ')' : ''}`;
+
+      const makeupBox = document.getElementById('modal-makeup-alert-box');
+      const confirmBtn = document.getElementById('btn-modal-confirm');
+
+      if (appData.isAutoMakeupSession) {
+        makeupBox.style.display = 'block';
+        makeupBox.innerHTML = `
+          <div style="background:#FFF3E0; border:1.5px solid #FFB74D; border-radius:12px; padding:10px 12px; margin-bottom:12px; text-align:left;">
+            <div style="font-weight:700; color:#E65100; font-size:0.92rem; margin-bottom:3px;">
+              ⚠️ แจ้งเตือน: เช็คชื่อรอบชดเชยพิเศษ
+            </div>
+            <div style="font-size:0.83rem; color:#5D4037; line-height:1.4;">
+              วันนี้ (${appData.currentSessionDate}) <b>เป็นวันหยุดหรืออยู่นอกตารางเรียนปกติ</b><br>
+              กรุณากดยืนยัน หากผู้สอนหรือ HR นัดหมายให้เรียนชดเชยในวันนี้จริง
+            </div>
+          </div>
+        `;
+        confirmBtn.innerText = "✔ ยืนยันว่าวันนี้เป็นวันเรียนชดเชย";
+        confirmBtn.style.background = "#E65100";
+      } else {
+        makeupBox.style.display = 'none';
+        makeupBox.innerHTML = '';
+        confirmBtn.innerText = "ยืนยันว่านี่คือฉัน ✔";
+        confirmBtn.style.background = "var(--success)";
+      }
+
+      document.getElementById('confirm-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      selectedStudent = null;
+      document.getElementById('confirm-modal').style.display = 'none';
+    }
+
+    /* ⚡ INSTANT 0ms OPTIMISTIC CHECK-IN */
+    async function confirmCheckIn() {
+      if (!selectedStudent || !currentClassName || !appData) return;
+      
+      const st = selectedStudent;
+      const sessionDate = appData.currentSessionDate;
+
+      closeModal();
+
+      // 1. Instant Optimistic UI Paint
+      const timeNow = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+      st.isChecked = true;
+      st.checkTime = `(${timeNow})`;
+      setLocalStoredStudent(currentClassName, st.no);
+      try { localStorage.setItem(getDeviceCheckedDateKey(currentClassName), sessionDate); } catch(e){}
+      
+      renderClassData(appData);
+      showToast(`คุณ ${st.nickname || st.name} เช็คชื่อสำเร็จ! ✔`);
+
+      // 2. Background Sync to Google Sheets
+      try {
+        const res = await apiRequest("recordCheckIn", {
+          className: currentClassName,
+          studentNo: st.no,
+          sessionDateStr: sessionDate
+        });
+
+        if (res.success && res.updatedData) {
+          setCachedClassData(currentClassName, res.updatedData);
+          renderClassData(res.updatedData);
+        } else {
+          throw new Error(res.message || "บันทึกไม่สำเร็จ");
+        }
+      } catch (err) {
+        st.isChecked = false;
+        st.checkTime = "";
+        renderClassData(appData);
+        alert("เกิดข้อผิดพลาดในการบันทึก: " + err.message);
+      }
+    }
+
+    async function confirmUndoCheckIn(student) {
+      if (!student || !currentClassName || !appData) return;
+      
+      if (confirm(`ต้องการยกเลิกการเช็คชื่อวันนี้ของ "คุณ ${student.nickname || student.name}" ใช่หรือไม่?`)) {
+        showActionLoading(true, "กำลังยกเลิกการเช็คชื่อ...");
+        try {
+          const res = await apiRequest("cancelCheckIn", {
+            className: currentClassName,
+            studentNo: student.no,
+            sessionDateStr: appData.currentSessionDate
+          });
+
+          showActionLoading(false);
+          if (res.success) {
+            try { localStorage.removeItem(getDeviceCheckedDateKey(currentClassName)); } catch(e){}
+            setCachedClassData(currentClassName, res.updatedData);
+            showToast(`ยกเลิกการเช็คชื่อเรียบร้อยแล้ว`);
+            renderClassData(res.updatedData);
+          } else {
+            alert('เกิดข้อผิดพลาด: ' + res.message);
+          }
+        } catch (err) {
+          handleError(err);
+        }
+      }
+    }
+
+    async function resetSavedStudent() {
+      const deviceCheckedDate = localStorage.getItem(getDeviceCheckedDateKey(currentClassName));
+      if (appData && appData.currentSessionDate && deviceCheckedDate === appData.currentSessionDate) {
+        alert("⚠️ อุปกรณ์เครื่องนี้ได้ทำการเช็คชื่อในรอบวันนี้ไปแล้ว ไม่สามารถสลับชื่อเพื่อไปเช็คชื่อให้ผู้อื่นได้ในวันเดียวกัน");
+        return;
+      }
+
+      if (confirm("ต้องการเปลี่ยนผู้ใช้งาน / สลับไปเลือกชื่ออื่นสำหรับอุปกรณ์เครื่องนี้ใช่หรือไม่?")) {
+        showActionLoading(true, "กำลังเปลี่ยนผู้ใช้งาน...");
+        clearLocalStoredStudent(currentClassName);
+
+        try {
+          await apiRequest("resetDeviceIdentity", { className: currentClassName });
+          showActionLoading(false);
+          fetchLiveClassData(currentClassName);
+        } catch (err) {
+          showActionLoading(false);
+          fetchLiveClassData(currentClassName);
+        }
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    function handleError(err) {
+      showActionLoading(false);
+      alert("เกิดข้อผิดพลาด: " + err.message);
+    }
+  </script>
 </body>
 </html>
