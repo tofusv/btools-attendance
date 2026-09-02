@@ -1770,9 +1770,13 @@ ${rankText}
           sessionDateStr: sessionDate
         });
 
-        if (res.success && res.updatedData) {
-          setCachedClassData(currentClassName, res.updatedData);
-          renderClassData(res.updatedData);
+        if (res.success) {
+          if (res.updatedData) {
+            setCachedClassData(currentClassName, res.updatedData);
+            renderClassData(res.updatedData);
+          } else {
+            setCachedClassData(currentClassName, appData);
+          }
         } else {
           throw new Error(res.message || "บันทึกไม่สำเร็จ");
         }
@@ -1799,9 +1803,16 @@ ${rankText}
           showActionLoading(false);
           if (res.success) {
             try { localStorage.removeItem(getDeviceCheckedDateKey(currentClassName)); } catch(e){}
-            setCachedClassData(currentClassName, res.updatedData);
+            student.isChecked = false;
+            student.checkTime = "";
+            if (res.updatedData) {
+              setCachedClassData(currentClassName, res.updatedData);
+              renderClassData(res.updatedData);
+            } else {
+              setCachedClassData(currentClassName, appData);
+              renderClassData(appData);
+            }
             showToast(`ยกเลิกการเช็คชื่อเรียบร้อยแล้ว`);
-            renderClassData(res.updatedData);
           } else {
             alert('เกิดข้อผิดพลาด: ' + res.message);
           }
