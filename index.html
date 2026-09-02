@@ -1752,13 +1752,14 @@ ${rankText}
 
       closeModal();
 
-      // 1. Instant Optimistic UI Paint
+      // 1. Instant Optimistic UI Paint (0ms)
       const timeNow = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
       st.isChecked = true;
       st.checkTime = `(${timeNow})`;
       setLocalStoredStudent(currentClassName, st.no);
       try { localStorage.setItem(getDeviceCheckedDateKey(currentClassName), sessionDate); } catch(e){}
       
+      setCachedClassData(currentClassName, appData);
       renderClassData(appData);
       showToast(`คุณ ${st.nickname || st.name} เช็คชื่อสำเร็จ! ✔`);
 
@@ -1771,28 +1772,33 @@ ${rankText}
         });
 
         if (res.success) {
-          if (res.updatedData) {
-            setCachedClassData(currentClassName, res.updatedData);
-            renderClassData(res.updatedData);
-          } else {
-            setCachedClassData(currentClassName, appData);
-          }
+          setCachedClassData(currentClassName, appData);
         } else {
           throw new Error(res.message || "บันทึกไม่สำเร็จ");
         }
       } catch (err) {
         st.isChecked = false;
         st.checkTime = "";
+        setCachedClassData(currentClassName, appData);
         renderClassData(appData);
         alert("เกิดข้อผิดพลาดในการบันทึก: " + err.message);
       }
     }
 
+    /* ⚡ INSTANT 0ms OPTIMISTIC UNDO */
     async function confirmUndoCheckIn(student) {
       if (!student || !currentClassName || !appData) return;
       
       if (confirm(`ต้องการยกเลิกการเช็คชื่อวันนี้ของ "คุณ ${student.nickname || student.name}" ใช่หรือไม่?`)) {
-        showActionLoading(true, "กำลังยกเลิกการเช็คชื่อ...");
+        // 1. Instant Optimistic State & UI Paint (0ms)
+        student.isChecked = false;
+        student.checkTime = "";
+        try { localStorage.removeItem(getDeviceCheckedDateKey(currentClassName)); } catch(e){}
+        setCachedClassData(currentClassName, appData);
+        renderClassData(appData);
+        showToast(`ยกเลิกการเช็คชื่อเรียบร้อยแล้ว`);
+
+        // 2. Background Sync to Google Sheets
         try {
           const res = await apiRequest("cancelCheckIn", {
             className: currentClassName,
@@ -1800,28 +1806,19 @@ ${rankText}
             sessionDateStr: appData.currentSessionDate
           });
 
-          showActionLoading(false);
-          if (res.success) {
-            try { localStorage.removeItem(getDeviceCheckedDateKey(currentClassName)); } catch(e){}
-            student.isChecked = false;
-            student.checkTime = "";
-            if (res.updatedData) {
-              setCachedClassData(currentClassName, res.updatedData);
-              renderClassData(res.updatedData);
-            } else {
-              setCachedClassData(currentClassName, appData);
-              renderClassData(appData);
-            }
-            showToast(`ยกเลิกการเช็คชื่อเรียบร้อยแล้ว`);
-          } else {
-            alert('เกิดข้อผิดพลาด: ' + res.message);
+          if (!res.success) {
+            throw new Error(res.message || "ยกเลิกไม่สำเร็จ");
           }
         } catch (err) {
-          handleError(err);
+          student.isChecked = true;
+          setCachedClassData(currentClassName, appData);
+          renderClassData(appData);
+          alert("เกิดข้อผิดพลาดในการยกเลิก: " + err.message);
         }
       }
     }
 
+    /* ⚡ INSTANT 0ms CHANGE USER / SWITCH PERSON */
     async function resetSavedStudent() {
       const deviceCheckedDate = localStorage.getItem(getDeviceCheckedDateKey(currentClassName));
       if (appData && appData.currentSessionDate && deviceCheckedDate === appData.currentSessionDate) {
@@ -1830,17 +1827,19 @@ ${rankText}
       }
 
       if (confirm("ต้องการเปลี่ยนผู้ใช้งาน / สลับไปเลือกชื่ออื่นสำหรับอุปกรณ์เครื่องนี้ใช่หรือไม่?")) {
-        showActionLoading(true, "กำลังเปลี่ยนผู้ใช้งาน...");
+        // 1. Instant Local Reset (0ms)
         clearLocalStoredStudent(currentClassName);
-
-        try {
-          await apiRequest("resetDeviceIdentity", { className: currentClassName });
-          showActionLoading(false);
-          fetchLiveClassData(currentClassName);
-        } catch (err) {
-          showActionLoading(false);
-          fetchLiveClassData(currentClassName);
+        if (appData) {
+          appData.boundStudentNo = null;
+          setCachedClassData(currentClassName, appData);
+          renderClassData(appData);
         }
+        showToast("สลับผู้ใช้งานเรียบร้อยแล้ว กรุณาแตะเลือกชื่อของคุณ 👤");
+
+        // 2. Background Server Reset (Non-blocking)
+        try {
+          apiRequest("resetDeviceIdentity", { className: currentClassName });
+        } catch (err) {}
       }
     }
 
