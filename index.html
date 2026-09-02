@@ -430,68 +430,81 @@
     /* Crisp SVG User Avatar */
     const USER_AVATAR_SVG = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
 
-    /* Universal API Caller */
-    async function apiRequest(action, params = {}) {
+    /* Universal API Caller with Exponential Backoff + Random Jitter */
+    async function apiRequest(action, params = {}, maxRetries = 3) {
       const devToken = getDeviceToken();
       const devFp = getDeviceFingerprint();
 
-      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-          if (action === "getClassData") {
-            const query = new URLSearchParams({
-              action: "getClassData",
-              className: params.className || "",
-              deviceToken: devToken,
-              deviceFingerprint: devFp
+          if (typeof google === 'undefined' || !google.script || !google.script.run) {
+            if (action === "getClassData") {
+              const query = new URLSearchParams({
+                action: "getClassData",
+                className: params.className || "",
+                deviceToken: devToken,
+                deviceFingerprint: devFp
+              });
+              const res = await fetch(`${GAS_API_URL}?${query.toString()}`, {
+                method: 'GET',
+                mode: 'cors'
+              });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              return await res.json();
+            }
+
+            const payload = { action: action, deviceToken: devToken, deviceFingerprint: devFp, ...params };
+            const res = await fetch(GAS_API_URL, {
+              method: 'POST',
+              mode: 'cors',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(payload)
             });
-            const res = await fetch(`${GAS_API_URL}?${query.toString()}`, {
-              method: 'GET',
-              mode: 'cors'
-            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return await res.json();
           }
 
-          const payload = { action: action, deviceToken: devToken, deviceFingerprint: devFp, ...params };
-          const res = await fetch(GAS_API_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
+          return await new Promise((resolve, reject) => {
+            if (action === "getClassData") {
+              google.script.run
+                .withSuccessHandler(data => resolve({ success: true, data: data }))
+                .withFailureHandler(err => reject(err))
+                .getClassData(params.className, devToken, devFp);
+            } else if (action === "recordCheckIn") {
+              google.script.run
+                .withSuccessHandler(res => resolve(res))
+                .withFailureHandler(err => reject(err))
+                .recordCheckIn(params.className, params.studentNo, params.sessionDateStr, devToken, devFp);
+            } else if (action === "cancelCheckIn") {
+              google.script.run
+                .withSuccessHandler(res => resolve(res))
+                .withFailureHandler(err => reject(err))
+                .cancelCheckIn(params.className, params.studentNo, params.sessionDateStr, devToken, devFp);
+            } else if (action === "resetDeviceIdentity") {
+              google.script.run
+                .withSuccessHandler(res => resolve(res))
+                .withFailureHandler(err => reject(err))
+                .resetDeviceIdentity(params.className, devToken, devFp);
+            } else if (action === "openEmergencySession") {
+              google.script.run
+                .withSuccessHandler(res => resolve(res))
+                .withFailureHandler(err => reject(err))
+                .openEmergencySession(params.className, params.sessionDateStr, devToken, devFp);
+            } else {
+              reject(new Error("Unknown action: " + action));
+            }
           });
-          return await res.json();
         } catch (err) {
-          throw new Error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: " + err.message);
+          if (attempt < maxRetries) {
+            // Exponential backoff: 800ms * 2^attempt + random jitter (0-500ms)
+            const delay = (800 * Math.pow(2, attempt)) + Math.floor(Math.random() * 500);
+            console.warn(`[Auto-Retry] Action "${action}" failed (attempt ${attempt + 1}/${maxRetries + 1}). Retrying in ${delay}ms...`, err);
+            await new Promise(r => setTimeout(r, delay));
+          } else {
+            throw new Error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: " + (err.message || err.toString()));
+          }
         }
       }
-
-      return new Promise((resolve, reject) => {
-        if (action === "getClassData") {
-          google.script.run
-            .withSuccessHandler(data => resolve({ success: true, data: data }))
-            .withFailureHandler(err => reject(err))
-            .getClassData(params.className, devToken, devFp);
-        } else if (action === "recordCheckIn") {
-          google.script.run
-            .withSuccessHandler(res => resolve(res))
-            .withFailureHandler(err => reject(err))
-            .recordCheckIn(params.className, params.studentNo, params.sessionDateStr, devToken, devFp);
-        } else if (action === "cancelCheckIn") {
-          google.script.run
-            .withSuccessHandler(res => resolve(res))
-            .withFailureHandler(err => reject(err))
-            .cancelCheckIn(params.className, params.studentNo, params.sessionDateStr, devToken, devFp);
-        } else if (action === "resetDeviceIdentity") {
-          google.script.run
-            .withSuccessHandler(res => resolve(res))
-            .withFailureHandler(err => reject(err))
-            .resetDeviceIdentity(params.className, devToken, devFp);
-        } else if (action === "openEmergencySession") {
-          google.script.run
-            .withSuccessHandler(res => resolve(res))
-            .withFailureHandler(err => reject(err))
-            .openEmergencySession(params.className, params.sessionDateStr, devToken, devFp);
-        }
-      });
     }
 
     function cleanTimeString(rawTime) {

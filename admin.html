@@ -1018,16 +1018,29 @@
     }
 
     /* =========================================================================
-       API DATA FETCHING
+       API DATA FETCHING (with Exponential Backoff & Jitter)
        ========================================================================= */
-    async function adminApiRequest(action, payload = {}) {
+    async function adminApiRequest(action, payload = {}, maxRetries = 3) {
       const body = { action: action, ...payload };
-      const res = await fetch(GAS_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(body)
-      });
-      return await res.json();
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const res = await fetch(GAS_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(body)
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.json();
+        } catch (err) {
+          if (attempt < maxRetries) {
+            const delay = (800 * Math.pow(2, attempt)) + Math.floor(Math.random() * 500);
+            console.warn(`[Admin Auto-Retry] Action "${action}" failed (attempt ${attempt + 1}/${maxRetries + 1}). Retrying in ${delay}ms...`, err);
+            await new Promise(r => setTimeout(r, delay));
+          } else {
+            throw err;
+          }
+        }
+      }
     }
 
     function formatLongDate(dateInput) {
