@@ -1970,19 +1970,11 @@
         return `${loc}?class=${encodeURIComponent(className)}`;
       }
       
-      // Running on Vercel / GitHub Pages / Custom Domain
-      let base = window.location.origin;
-      const path = window.location.pathname;
-      
-      if (path.includes('admin.html')) {
-        base = base + path.replace(/admin\.html$/, 'index.html');
-      } else if (path.endsWith('/admin')) {
-        base = base + path.replace(/\/admin$/, '');
-      } else {
-        base = base + (path.endsWith('/') ? path : path + '/');
-      }
-      
+      // Running on Vercel / GitHub Pages / Localhost
+      let base = window.location.origin + window.location.pathname;
+      base = base.replace(/\/admin(\.html)?$/, '').replace(/\/index(\.html)?$/, '');
       base = base.replace(/\/$/, '');
+      
       return `${base}/index.html?class=${encodeURIComponent(className)}`;
     }
 
