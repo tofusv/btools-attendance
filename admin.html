@@ -1415,7 +1415,7 @@
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-3 border-t border-[#E9E9E7]">
             <a 
               class="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 min-h-[36px] bg-[#2383E2] hover:bg-[#1B6FC1] text-white rounded-lg text-xs font-medium transition cursor-pointer shadow-none text-center" 
-              href="index.html?class=${encodeURIComponent(c.className)}" 
+              href="${getCheckInUrl(c.className)}" 
               target="_blank"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -1963,6 +1963,29 @@
     /* =========================================================================
        QR CODE VIEWER & PRINT ENGINE
        ========================================================================= */
+    function getCheckInUrl(className) {
+      const loc = window.location.href.split('?')[0].split('#')[0];
+      if (loc.includes('/macros/s/')) {
+        // Running natively inside Google Apps Script Web App
+        return `${loc}?class=${encodeURIComponent(className)}`;
+      }
+      
+      // Running on Vercel / GitHub Pages / Custom Domain
+      let base = window.location.origin;
+      const path = window.location.pathname;
+      
+      if (path.includes('admin.html')) {
+        base = base + path.replace(/admin\.html$/, 'index.html');
+      } else if (path.endsWith('/admin')) {
+        base = base + path.replace(/\/admin$/, '');
+      } else {
+        base = base + (path.endsWith('/') ? path : path + '/');
+      }
+      
+      base = base.replace(/\/$/, '');
+      return `${base}/index.html?class=${encodeURIComponent(className)}`;
+    }
+
     function openQrModal(className) {
       if (!adminData) return;
       const c = adminData.classes.find(item => item.className === className);
@@ -1971,9 +1994,8 @@
       document.getElementById('qr-course-title').innerText = c.course;
       document.getElementById('qr-class-subtitle').innerText = `${c.company || 'ลูกค้า'} | คลาส ${c.className}`;
 
-      // Build target URL
-      const currentOrigin = window.location.origin + window.location.pathname.replace('admin.html', '').replace(/\/$/, '');
-      const fullUrl = `${currentOrigin}/index.html?class=${encodeURIComponent(className)}`;
+      // Build target URL safely
+      const fullUrl = getCheckInUrl(className);
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullUrl)}`;
 
       document.getElementById('qr-image-tag').src = qrApiUrl;
@@ -2257,8 +2279,7 @@ ${rankText}
         `;
       }
 
-      const currentOrigin = window.location.origin + window.location.pathname.replace('admin.html', '').replace(/\/$/, '');
-      const fullUrl = `${currentOrigin}/index.html?class=${encodeURIComponent(className)}`;
+      const fullUrl = getCheckInUrl(className);
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(fullUrl)}`;
 
       const printWin = window.open('', '_blank', 'width=900,height=1100');
