@@ -430,6 +430,43 @@
     /* Crisp SVG User Avatar */
     const USER_AVATAR_SVG = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
 
+    /* Non-blocking Sequential Sync Queue Manager */
+    let syncPromiseQueue = Promise.resolve();
+    let activeSyncCount = 0;
+
+    function updateSyncIndicator(syncing) {
+      isLiveSyncing = syncing;
+      const syncEl = document.getElementById('sync-indicator-badge');
+      if (syncEl) {
+        syncEl.innerHTML = syncing
+          ? `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-[#944903] bg-[#FDF3E1] px-2 py-0.5 rounded-full border border-[#EAC485]"><span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-pulse"></span> กำลังซิงค์...</span>`
+          : `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-[#218C42] bg-[#EEF3ED] px-2 py-0.5 rounded-full border border-[#B9DCC3]"><span class="w-1.5 h-1.5 rounded-full bg-[#2F9E44]"></span> ซิงค์แล้ว</span>`;
+      }
+    }
+
+    function enqueueSyncTask(taskFn) {
+      activeSyncCount++;
+      updateSyncIndicator(true);
+
+      syncPromiseQueue = syncPromiseQueue
+        .then(async () => {
+          try {
+            return await taskFn();
+          } catch(err) {
+            console.warn("[SyncQueue Task Warning]", err);
+            return null;
+          }
+        })
+        .finally(() => {
+          activeSyncCount = Math.max(0, activeSyncCount - 1);
+          if (activeSyncCount === 0) {
+            updateSyncIndicator(false);
+          }
+        });
+
+      return syncPromiseQueue;
+    }
+
     /* Universal API Caller with Exponential Backoff + Random Jitter */
     async function apiRequest(action, params = {}, maxRetries = 3) {
       const devToken = getDeviceToken();
@@ -671,15 +708,14 @@
     }
 
     async function fetchLiveClassData(className) {
-      isLiveSyncing = true;
+      updateSyncIndicator(true);
       try {
         const res = await apiRequest("getClassData", { className: className });
+        updateSyncIndicator(false);
         if (res.success && res.data) {
-          isLiveSyncing = false;
           setCachedClassData(className, res.data);
           renderClassData(res.data);
         } else {
-          isLiveSyncing = false;
           if (appData) {
             renderClassData(appData);
           } else {
@@ -696,7 +732,7 @@
           }
         }
       } catch (err) {
-        isLiveSyncing = false;
+        updateSyncIndicator(false);
         if (appData) {
           renderClassData(appData);
         } else {
@@ -1044,7 +1080,7 @@
                 <div class="text-xs text-[#787774]">${savedStudent.name} ${savedStudent.dept && savedStudent.dept !== '-' ? '(' + savedStudent.dept + ')' : ''}</div>
               </div>
             </div>
-            <div>${syncStatusHtml}</div>
+            <div id="sync-indicator-badge">${syncStatusHtml}</div>
           </div>
           ${actionHtml}
           ${switchBtnHtml}
@@ -1763,26 +1799,27 @@ ${rankText}
       renderClassData(appData);
       showToast(`คุณ ${st.nickname || st.name} เช็คชื่อสำเร็จ! ✔`);
 
-      // 2. Background Sync to Google Sheets
-      try {
-        const res = await apiRequest("recordCheckIn", {
-          className: currentClassName,
-          studentNo: st.no,
-          sessionDateStr: sessionDate
-        });
+      // 2. Background Sequential Sync to Google Sheets
+      enqueueSyncTask(async () => {
+        try {
+          const res = await apiRequest("recordCheckIn", {
+            className: currentClassName,
+            studentNo: st.no,
+            sessionDateStr: sessionDate
+          });
 
-        if (res.success) {
+          if (!res.success) {
+            throw new Error(res.message || "บันทึกไม่สำเร็จ");
+          }
           setCachedClassData(currentClassName, appData);
-        } else {
-          throw new Error(res.message || "บันทึกไม่สำเร็จ");
+        } catch (err) {
+          st.isChecked = false;
+          st.checkTime = "";
+          setCachedClassData(currentClassName, appData);
+          renderClassData(appData);
+          alert("เกิดข้อผิดพลาดในการบันทึก: " + err.message);
         }
-      } catch (err) {
-        st.isChecked = false;
-        st.checkTime = "";
-        setCachedClassData(currentClassName, appData);
-        renderClassData(appData);
-        alert("เกิดข้อผิดพลาดในการบันทึก: " + err.message);
-      }
+      });
     }
 
     /* ⚡ INSTANT 0ms OPTIMISTIC UNDO */
@@ -1798,23 +1835,26 @@ ${rankText}
         renderClassData(appData);
         showToast(`ยกเลิกการเช็คชื่อเรียบร้อยแล้ว`);
 
-        // 2. Background Sync to Google Sheets
-        try {
-          const res = await apiRequest("cancelCheckIn", {
-            className: currentClassName,
-            studentNo: student.no,
-            sessionDateStr: appData.currentSessionDate
-          });
+        // 2. Background Sequential Sync to Google Sheets
+        enqueueSyncTask(async () => {
+          try {
+            const res = await apiRequest("cancelCheckIn", {
+              className: currentClassName,
+              studentNo: student.no,
+              sessionDateStr: appData.currentSessionDate
+            });
 
-          if (!res.success) {
-            throw new Error(res.message || "ยกเลิกไม่สำเร็จ");
+            if (!res.success) {
+              throw new Error(res.message || "ยกเลิกไม่สำเร็จ");
+            }
+            setCachedClassData(currentClassName, appData);
+          } catch (err) {
+            student.isChecked = true;
+            setCachedClassData(currentClassName, appData);
+            renderClassData(appData);
+            alert("เกิดข้อผิดพลาดในการยกเลิก: " + err.message);
           }
-        } catch (err) {
-          student.isChecked = true;
-          setCachedClassData(currentClassName, appData);
-          renderClassData(appData);
-          alert("เกิดข้อผิดพลาดในการยกเลิก: " + err.message);
-        }
+        });
       }
     }
 
@@ -1836,10 +1876,12 @@ ${rankText}
         }
         showToast("สลับผู้ใช้งานเรียบร้อยแล้ว กรุณาแตะเลือกชื่อของคุณ 👤");
 
-        // 2. Background Server Reset (Non-blocking)
-        try {
-          apiRequest("resetDeviceIdentity", { className: currentClassName });
-        } catch (err) {}
+        // 2. Background Sequential Reset
+        enqueueSyncTask(async () => {
+          try {
+            await apiRequest("resetDeviceIdentity", { className: currentClassName });
+          } catch (err) {}
+        });
       }
     }
 
